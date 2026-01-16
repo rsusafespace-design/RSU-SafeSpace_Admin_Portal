@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSU Safespace - Web-Based Guidance Counseling Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           UPDATED COLOR SCHEME WITH GREEN PRIMARY
+           Primary: RSU Green #15803d (RGB: 21, 128, 61)
+           Secondary: Soft Blue #2563eb (RGB: 37, 99, 235)
+           Accent: Warm Yellow #fbbf24 (RGB: 251, 191, 36)
+           Dark: Charcoal Gray #1f2937 (RGB: 31, 41, 55)
+           Light: Off-white #f8fafc (RGB: 248, 250, 252)
+           Muted: Cool Gray #6b7280 (RGB: 107, 114, 128)
+           Success: Emerald Green #059669 (RGB: 5, 150, 105)
+        ============================================ */
+        
+        :root {
+            /* Primary Colors - RSU Green */
+            --primary: rgb(21, 128, 61); /* #15803d */
+            --primary-light: rgb(34, 197, 94); /* #22c55e */
+            --primary-dark: rgb(21, 101, 48); /* #156530 */
+            --primary-transparent: rgba(21, 128, 61, 0.1);
+            
+            /* Secondary Colors - Soft Blue */
+            --secondary: rgb(37, 99, 235); /* #2563eb */
+            --secondary-light: rgb(96, 165, 250); /* #60a5fa */
+            --secondary-dark: rgb(30, 64, 175); /* #1e40af */
+            
+            /* Accent Colors - Warm Yellow */
+            --accent: rgb(251, 191, 36); /* #fbbf24 */
+            --accent-light: rgb(252, 211, 77); /* #fcd34d */
+            --accent-dark: rgb(245, 158, 11); /* #f59e0b */
+            
+            /* Neutral Colors */
+            --dark: rgb(31, 41, 55); /* #1f2937 */
+            --light: rgb(248, 250, 252); /* #f8fafc */
+            --muted: rgb(107, 114, 128); /* #6b7280 */
+            --success: rgb(5, 150, 105); /* #059669 */
+            
+            /* UI Colors */
+            --panel: rgb(255, 255, 255); /* #FFFFFF */
+            --bg: rgb(244, 246, 251); /* #f4f6fb */
+            --card-shadow: 0 6px 18px rgba(31, 41, 55, 0.08);
+            --radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: var(--bg);
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header & Navigation */
+        header {
+            background-color: var(--primary);
+            box-shadow: 0 2px 15px rgba(21, 128, 61, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transform: translateY(0);
+            transition: transform 0.4s ease, background-color 0.4s ease;
+        }
+        
+        header.scrolled {
+            background-color: rgba(21, 128, 61, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            background-color: var(--light);
+            color: var(--primary);
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+        
+        .logo:hover .logo-icon {
+            transform: rotate(15deg) scale(1.05);
+        }
+        
+        .logo-text h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0;
+            color: var(--light);
+        }
+        
+        .logo-text p {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: var(--light);
+            font-weight: 500;
+            transition: var(--transition);
+            padding: 8px 0;
+            position: relative;
+        }
+        
+        nav a:hover {
+            color: var(--accent);
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent);
+            transition: var(--transition);
+        }
+        
+        nav a:hover::after {
+            width: 100%;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--light);
+            cursor: pointer;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(21, 128, 61, 0.9), rgba(21, 101, 48, 0.9)), url('https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            color: var(--light);
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(21, 128, 61, 0.2), rgba(37, 99, 235, 0.1));
+            z-index: 1;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero h2 {
+            font-size: 3.2rem;
+            color: var(--light);
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease 0.3s forwards;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease 0.5s forwards;
+            line-height: 1.8;
+        }
+        
+        .hero .btn {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease 0.7s forwards;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: var(--light);
+            padding: 14px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .btn:hover::after {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            background-color: var(--secondary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(21, 128, 61, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            box-shadow: 0 8px 20px rgba(21, 128, 61, 0.4);
+        }
+        
+        /* Services Section */
+        .services {
+            padding: 100px 0;
+            background-color: var(--light);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        
+        .section-title.animated {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .section-title h2 {
+            font-size: 2.5rem;
+            position: relative;
+            display: inline-block;
+            color: var(--primary);
+        }
+        
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 4px;
+            background-color: var(--primary);
+            border-radius: 2px;
+            transition: width 1s ease 0.5s;
+        }
+        
+        .section-title.animated h2::after {
+            width: 80px;
+        }
+        
+        .section-title p {
+            color: var(--muted);
+            max-width: 700px;
+            margin: 20px auto 0;
+            font-size: 1.1rem;
+        }
+        
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+        
+        .service-card {
+            background-color: var(--panel);
+            border-radius: var(--radius);
+            padding: 35px 30px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            text-align: center;
+            border-top: 4px solid transparent;
+            height: 100%;
+            border: 1px solid rgba(21, 128, 61, 0.1);
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        
+        .service-card.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .service-card:nth-child(1) { border-top-color: var(--primary); transition-delay: 0.1s; }
+        .service-card:nth-child(2) { border-top-color: var(--secondary); transition-delay: 0.2s; }
+        .service-card:nth-child(3) { border-top-color: var(--accent); transition-delay: 0.3s; }
+        .service-card:nth-child(4) { border-top-color: var(--success); transition-delay: 0.4s; }
+        .service-card:nth-child(5) { border-top-color: var(--primary-light); transition-delay: 0.5s; }
+        .service-card:nth-child(6) { border-top-color: var(--secondary-light); transition-delay: 0.6s; }
+        
+        .service-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(21, 128, 61, 0.12);
+            border-color: var(--primary-light);
+        }
+        
+        .service-icon {
+            background-color: var(--primary);
+            color: var(--light);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 1.8rem;
+            box-shadow: 0 6px 15px rgba(21, 128, 61, 0.2);
+            transition: var(--transition);
+        }
+        
+        .service-card:hover .service-icon {
+            transform: scale(1.1) rotate(10deg);
+            background-color: var(--primary-light);
+        }
+        
+        .service-card h3 {
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+        
+        .service-card p {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        
+        /* About Section */
+        .about {
+            padding: 100px 0;
+            background-color: var(--bg);
+        }
+        
+        .about-content {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+        }
+        
+        .about-text {
+            flex: 1;
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        
+        .about-text.animated {
+            opacity: 1;
+            transform: translateX(0);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .about-text h3 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+        
+        .about-text p {
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+        
+        .about-image {
+            flex: 1;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(21, 128, 61, 0.1);
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        
+        .about-image.animated {
+            opacity: 1;
+            transform: translateX(0);
+            transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+        }
+        
+        .about-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: var(--transition);
+        }
+        
+        .about-image:hover img {
+            transform: scale(1.05);
+        }
+        
+        /* Mission & Vision Section */
+        .mission-vision {
+            padding: 80px 0;
+            background-color: var(--light);
+        }
+        
+        .mv-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+        
+        .mv-card {
+            background-color: var(--primary);
+            color: var(--light);
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(21, 128, 61, 0.15);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        
+        .mv-card.animated {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .mv-card:nth-child(2) {
+            transition-delay: 0.2s;
+        }
+        
+        .mv-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: var(--accent);
+        }
+        
+        .mv-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(21, 128, 61, 0.2);
+        }
+        
+        .mv-card h3 {
+            color: var(--light);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .mv-card p {
+            line-height: 1.7;
+            opacity: 0.95;
+        }
+        
+        /* Mental Health Hotlines Section */
+        .mental-health-hotlines {
+            padding: 80px 0;
+            background: var(--light);
+        }
+        
+        /* GCSO Highlights Section */
+        .gcso-highlights {
+            padding: 100px 0;
+            background-color: var(--bg);
+        }
+        
+        .highlights-slideshow {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        
+        .highlights-slideshow.animated {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .highlight-slide {
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(21, 128, 61, 0.1);
+            border: 1px solid rgba(21, 128, 61, 0.1);
+            animation: slideIn 0.8s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .highlight-slide img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+        
+        .highlight-slide:hover img {
+            transform: scale(1.05);
+        }
+        
+        .highlight-slide > div {
+            padding: 25px;
+            background-color: var(--panel);
+        }
+        
+        .highlight-slide h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .highlight-slide p {
+            color: var(--muted);
+        }
+        
+        .highlight-prev, .highlight-next {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: var(--primary);
+            color: var(--light);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(21, 128, 61, 0.2);
+        }
+        
+        .highlight-prev:hover, .highlight-next:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .highlight-prev {
+            left: 15px;
+        }
+        
+        .highlight-next {
+            right: 15px;
+        }
+        
+        .highlight-indicators {
+            text-align: center;
+            margin-top: 25px;
+        }
+        
+        .highlight-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin: 0 6px;
+            background-color: var(--muted);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .highlight-dot.active {
+            background-color: var(--primary);
+            transform: scale(1.2);
+        }
+        
+        /* Developers Section */
+        .developers-section {
+            padding: 100px 0;
+            background-color: var(--light);
+        }
+        
+        /* LEADER CARD - Rian on top */
+        .leader-card {
+            background: var(--panel);
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(21, 128, 61, 0.15);
+            padding: 30px;
+            text-align: center;
+            transition: var(--transition);
+            border-top: 6px solid var(--accent);
+            border: 1px solid rgba(21, 128, 61, 0.15);
+            max-width: 500px;
+            margin: 0 auto 50px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        
+        .leader-card.animated {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .leader-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(21, 128, 61, 0.2);
+            border-color: var(--primary-light);
+        }
+        
+        .leader-card img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 4px solid var(--primary);
+            box-shadow: 0 6px 15px rgba(21, 128, 61, 0.2);
+            transition: var(--transition);
+        }
+        
+        .leader-card:hover img {
+            transform: scale(1.05);
+            border-color: var(--accent);
+        }
+        
+        .leader-card h4 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .leader-card p {
+            color: var(--muted);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .leader-card .role {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            letter-spacing: 0.2px;
+        }
+        
+        .leader-card .course {
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+        
+        .leader-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: var(--dark);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* TEAM CARDS - Other members in a row below */
+        .team-cards {
+            display: flex;
+            justify-content: center;
+            flex-wrap: nowrap;
+            gap: 25px;
+            margin-top: 30px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .team-card {
+            background: var(--panel);
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            padding: 25px 20px;
+            text-align: center;
+            transition: var(--transition);
+            border-top: 4px solid var(--primary);
+            border: 1px solid rgba(21, 128, 61, 0.1);
+            flex: 1;
+            min-width: 200px;
+            max-width: 230px;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        
+        .team-card.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .team-card:nth-child(1) { transition-delay: 0.1s; }
+        .team-card:nth-child(2) { transition-delay: 0.2s; }
+        .team-card:nth-child(3) { transition-delay: 0.3s; }
+        .team-card:nth-child(4) { transition-delay: 0.4s; }
+        
+        .team-card:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 15px 30px rgba(21, 128, 61, 0.12);
+            border-color: var(--primary-light);
+        }
+        
+        .team-card img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+            border: 3px solid var(--primary);
+            transition: var(--transition);
+        }
+        
+        .team-card:hover img {
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+        
+        .team-card h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .team-card p {
+            color: var(--muted);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .team-card .role {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.95rem;
+            letter-spacing: 0.2px;
+        }
+        
+        .team-card .course {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--primary);
+            color: var(--light);
+            padding: 70px 0 20px;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        
+        footer.animated {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-column {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        footer.animated .footer-column:nth-child(1) { transition: opacity 0.8s ease 0.1s, transform 0.8s ease 0.1s; }
+        footer.animated .footer-column:nth-child(2) { transition: opacity 0.8s ease 0.2s, transform 0.8s ease 0.2s; }
+        footer.animated .footer-column:nth-child(3) { transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s; }
+        footer.animated .footer-column:nth-child(4) { transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s; }
+        
+        footer.animated .footer-column {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .footer-column h3 {
+            color: var(--light);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background-color: var(--accent);
+            transition: width 1s ease;
+        }
+        
+        footer.animated .footer-column h3::after {
+            width: 40px;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            transition: var(--transition);
+        }
+        
+        .footer-column ul li:hover {
+            transform: translateX(5px);
+        }
+        
+        .footer-column ul li i {
+            color: var(--accent-light);
+            margin-top: 4px;
+        }
+        
+        .footer-column a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-column a:hover {
+            color: var(--accent);
+            padding-left: 5px;
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transition: var(--transition);
+            color: var(--light);
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        footer.animated .social-icons a:nth-child(1) { transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s; }
+        footer.animated .social-icons a:nth-child(2) { transition: opacity 0.8s ease 0.6s, transform 0.8s ease 0.6s; }
+        footer.animated .social-icons a:nth-child(3) { transition: opacity 0.8s ease 0.7s, transform 0.8s ease 0.7s; }
+        footer.animated .social-icons a:nth-child(4) { transition: opacity 0.8s ease 0.8s, transform 0.8s ease 0.8s; }
+        
+        footer.animated .social-icons a {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .social-icons a:hover {
+            background-color: var(--accent);
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 5px 10px rgba(251, 191, 36, 0.2);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        footer.animated .copyright {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.8s ease 1s, transform 0.8s ease 1s;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 1200px) {
+            .team-card {
+                min-width: 180px;
+                max-width: 200px;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .about-content {
+                flex-direction: column;
+            }
+            
+            .hero h2 {
+                font-size: 2.5rem;
+            }
+            
+            .team-cards {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .team-card {
+                min-width: 180px;
+                max-width: 200px;
+            }
+            
+            .about-text, .about-image {
+                transform: translateY(30px) !important;
+            }
+            
+            .about-text.animated, .about-image.animated {
+                transform: translateY(0) !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            nav ul {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: var(--primary);
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+                z-index: 100;
+                gap: 15px;
+                animation: slideDown 0.3s ease;
+            }
+            
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            nav ul.active {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero {
+                padding: 80px 0;
+            }
+            
+            .hero h2 {
+                font-size: 2.2rem;
+            }
+            
+            .services, .about, .testimonials, .portals, .mission-vision {
+                padding: 70px 0;
+            }
+            
+            .highlight-prev, .highlight-next {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+            
+            .team-cards {
+                flex-wrap: wrap;
+            }
+            
+            .team-card {
+                min-width: 160px;
+                max-width: 180px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .service-card, .mv-card {
+                padding: 25px 20px;
+            }
+            
+            .leader-card {
+                max-width: 100%;
+                padding: 25px 20px;
+            }
+            
+            .leader-card img {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .team-cards {
+                flex-direction: column;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+            
+            .team-card {
+                min-width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        /* Animation keyframes */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        /* Scroll-triggered animation classes */
+        .animated {
+            animation-duration: 0.8s;
+            animation-fill-mode: both;
+        }
+        
+        /* Confidentiality Modal Styles */
+        .modal-bg {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(31,41,55,0.45);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-bg.active {
+            display: flex;
+        }
+        .confidentiality-modal {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 420px;
+            width: 90vw;
+            box-shadow: 0 8px 32px rgba(21,128,61,0.18);
+            padding: 32px 28px 24px 28px;
+            text-align: center;
+            position: relative;
+            animation: slideIn 0.4s ease;
+        }
+        .confidentiality-modal h3 {
+            color: var(--primary);
+            margin-bottom: 18px;
+            font-size: 1.35rem;
+        }
+        .confidentiality-modal p {
+            color: var(--dark);
+            font-size: 1.01rem;
+            margin-bottom: 22px;
+            line-height: 1.6;
+        }
+        .modal-btns {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+        .modal-btn {
+            padding: 10px 28px;
+            border-radius: 24px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .modal-btn.accept {
+            background: var(--primary);
+            color: #fff;
+        }
+        .modal-btn.accept:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        .modal-btn.cancel {
+            background: var(--muted);
+            color: #fff;
+        }
+        .modal-btn.cancel:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+        
+        /* Floating elements animation */
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        /* Bounce animation for CTA buttons */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+        
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Confidentiality Agreement Modal -->
+    <div class="modal-bg" id="confidentialityModalBg">
+        <div class="confidentiality-modal">
+            <h3>Client Confidentiality Agreement</h3>
+            <p>
+                By accessing your portal, you acknowledge and agree to maintain the confidentiality of all information shared within this platform. All personal, academic, and counseling records are strictly confidential and must not be disclosed to unauthorized individuals. Breaches of confidentiality may result in disciplinary action in accordance with university policy and the Data Privacy Act of 2012 (RA 10173).
+            </p>
+            <div class="modal-btns">
+                <button class="modal-btn accept" id="confidentialityAccept">I Accept</button>
+                <button class="modal-btn cancel" id="confidentialityCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Header & Navigation -->
+    <header id="mainHeader">
+        <div class="container header-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="RSU.png" alt="RSU Logo" style="height:44px;width:auto;object-fit:contain;background:transparent;">
+                </div>
+                <div class="logo-text">
+                    <h1>RSU SAFESPACE</h1>
+                    <p>Web-Based Guidance Counseling Platform</p>
+                </div>
+            </div>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav>
+                <ul id="navMenu">
+                    <li><a href="#hotlines">Hotline</a></li>
+                    <li><a href="#services">Features</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#mission">Mission & Vision</a></li>
+                    <li><a href="https://www.facebook.com/profile.php?id=100064086760549">GCSO Facebook</a></li>
+                    <li><a href="login.html" target="_blank" class="btn">Access Your Portal</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container hero-content">
+            <h2>Welcome to RSU Safespace</h2>
+            <p>A secure, web-based platform designed to enhance the Guidance Counseling Service Office (GCSO) at Romblon State University. Providing students with confidential, accessible, and efficient mental health support services.</p>
+            <a href="login.html" class="btn bounce">Access Your Portal</a>
+        </div>
+    </section>
+
+    <!-- Features/Services Section -->
+    <section class="services" id="services">
+        <div class="container">
+            <div class="section-title" id="servicesTitle">
+                <h2>Platform Features</h2>
+                <p>Designed to support student mental wellness and counseling efficiency</p>
+            </div>
+            
+            <div class="services-grid" id="servicesGrid">
+                <div class="service-card" id="serviceCard1">
+                    <div class="service-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>Appointment Scheduling</h3>
+                    <p>Students can easily schedule, reschedule, or cancel appointments with counselors based on real-time availability.</p>
+                </div>
+                
+                <div class="service-card" id="serviceCard2">
+                    <div class="service-icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3>Secure Messaging</h3>
+                    <p>Confidential chat and video call system for private communication between students and counselors.</p>
+                </div>
+                
+                <div class="service-card" id="serviceCard3">
+                    <div class="service-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h3>Self-Assessment Tools</h3>
+                    <p>Informational questionnaires to help students gauge their current well-being and track progress over time.</p>
+                </div>
+                
+                <div class="service-card" id="serviceCard4">
+                    <div class="service-icon">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <h3>Confidential Reporting</h3>
+                    <p>Secure reporting system for bullying, harassment, or sensitive concerns with immediate counselor notification.</p>
+                </div>
+                
+                <div class="service-card" id="serviceCard5">
+                    <div class="service-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3>Resource Library</h3>
+                    <p>Curated collection of mental health resources, articles, and self-help materials accessible anytime.</p>
+                </div>
+                
+                <div class="service-card" id="serviceCard6">
+                    <div class="service-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Progress Tracking</h3>
+                    <p>Counselors can monitor student progress, session history, and maintain organized records efficiently.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Mission & Vision Section -->
+    <section class="mission-vision" id="mission">
+        <div class="container">
+            <div class="section-title" id="missionTitle">
+                <h2>Our Mission & Vision</h2>
+                <p>Guiding principles behind the RSU Safespace platform</p>
+            </div>
+            
+            <div class="mv-container">
+                <div class="mv-card" id="missionCard">
+                    <h3><i class="fas fa-bullseye"></i> Our Mission</h3>
+                    <p>To develop a secure, user-friendly web-based platform that enhances the accessibility, efficiency, and effectiveness of the Guidance Counseling Office (GCSO) at Romblon State University. We aim to provide students with confidential access to mental health support while empowering counselors with tools to manage services effectively.</p>
+                </div>
+                
+                <div class="mv-card" id="visionCard">
+                    <h3><i class="fas fa-eye"></i> Our Vision</h3>
+                    <p>To become the leading digital mental health support system within RSU, creating a stigma-free environment where every student feels safe, heard, and supported in their mental wellness journey. We envision a campus community where seeking help is normalized and accessible to all.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Mental Health Crisis Hotlines Section -->
+    <section class="mental-health-hotlines" id="hotlines">
+        <div class="container" style="max-width: 900px; margin: 0 auto;">
+            <div class="section-title" style="text-align: center;" id="hotlinesTitle">
+                <h2>Mental Health Crisis Hotlines</h2>
+                <p style="color: var(--muted); margin-bottom: 2rem;">If you or someone you know needs support, please reach out to these trusted hotlines.</p>
+            </div>
+            <div style="display: flex; justify-content: center;">
+                <img src="mental_health_hotlines.png" alt="Mental Health Crisis Hotlines" style="width: 100%; max-width: 1400px; border-radius: var(--radius); box-shadow: 0 8px 25px rgba(21, 128, 61, 0.1);" class="floating">
+            </div>
+        </div>
+    </section>
+    
+    <!-- GCSO Highlights Slideshow Section -->
+    <section class="gcso-highlights" id="testimonials">
+        <div class="container">
+            <div class="section-title" id="highlightsTitle">
+                <h2>GCSO Highlights</h2>
+                <p>Photo and video highlights from the Guidance Counseling Service Office</p>
+            </div>
+            <div class="highlights-slideshow" id="highlightsSlideshow">
+                <div class="highlight-slide" style="display: block;">
+                    <img src="siklab_award.png" alt="Safespace Siklab Award">
+                    <div>
+                        <h4>AWARD: Siklab Research Competition & Poster Design</h4>
+                        <p>RSU Safespace won an award at the Siklab event for outstanding performance in the research competition and poster design category. Congratulations to the team for their achievement and recognition in innovation and research excellence!</p>
+                    </div>
+                </div>
+
+                <div class="highlight-slide" style="display: none;">
+                    <img src="mental health.png" alt="RSU Webinar on Promoting Mental Health and Family Wellbeing">
+                    <div>
+                        <h4>RSU Webinar: Promoting Mental Health & Family Wellbeing</h4>
+                        <p>A virtual event on understanding and supporting mental wellness in the family. (Webinar highlight)</p>
+                    </div>
+                </div>
+                <div class="highlight-slide" style="display: none;">
+                    <img src="test.png" alt="Test Insights Program">
+                    <div>
+                        <h4>IN PHOTOS: Test Insights – A Program for Test Interpretation</h4>
+                        <p>GCSO's Test Interpretation Program provides students with insights into their psychological test results. Ongoing sessions ensure all test-takers receive their interpretations. (Event highlight)</p>
+                    </div>
+                </div>
+                
+                <!-- Slideshow Controls -->
+                <button class="highlight-prev">&#10094;</button>
+                <button class="highlight-next">&#10095;</button>
+                <div class="highlight-indicators">
+                    <span class="highlight-dot active"></span>
+                    <span class="highlight-dot"></span>
+                    <span class="highlight-dot"></span>
+                    <span class="highlight-dot"></span>
+                    <span class="highlight-dot"></span>
+                    <span class="highlight-dot"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- About & Developers Section -->
+    <section class="about" id="about">
+        <div class="container">
+            <div class="section-title" id="aboutTitle">
+                <h2>About RSU Safespace</h2>
+                <p>Empowering students and counselors through digital guidance and mental wellness support.</p>
+            </div>
+            <div class="about-content">
+                <div class="about-text" id="aboutText">
+                    <h3>What is RSU Safespace?</h3>
+                    <p>RSU Safespace is a web-based platform developed by BSIT students of Romblon State University to enhance the Guidance Counseling Service Office (GCSO) through digital innovation. The platform provides students with confidential, accessible, and efficient mental health support services, while empowering counselors with tools for appointment management, secure messaging, and progress tracking.</p>
+                    <h3 style="margin-top: 2rem;">Our Commitment</h3>
+                    <p>We are committed to fostering a stigma-free environment where every student feels safe, heard, and supported in their mental wellness journey. RSU Safespace is designed to make seeking help easy, private, and effective for all members of the RSU community.</p>
+                </div>
+                <div class="about-image" id="aboutImage">
+                    <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="RSU Safespace Platform">
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Developers Section - UPDATED LAYOUT -->
+    <section class="developers-section">
+        <div class="container">
+            <div class="section-title" id="developersTitle">
+                <h2>Meet the Developers</h2>
+                <p>The team behind RSU Safespace</p>
+            </div>
+            
+            <!-- LEADER CARD - Rian at the top -->
+            <div class="leader-card" id="leaderCard">
+                <div class="leader-badge">Project Leader</div>
+                
+                <img src="RIAN.png" alt="Rian Nicole Deocades">
+                <span class="dev-name-oval">Rian Nicole Deocades</span>
+                <p class="role">Leader / Lead Programmer (Student Portal)</p>
+                <p class="course">BSIT 4A</p>   
+            </div>
+            
+            <!-- TEAM CARDS - Other members in a row below -->
+            <div class="team-cards">
+                <div class="team-card" id="teamCard1">
+                    <span class="dev-name-oval-team">Mary Joy Ermino</span>
+                    <img src="JOY.png" alt="MarY Joy Ermino">
+                    <p class="role">Lead Programmer (Counselor Portal)</p>
+                    <p class="course">BSIT 4A</p>
+                </div>
+                <div class="team-card" id="teamCard2">
+                    <span class="dev-name-oval-team">Jean Denise Dalisay</span>
+                    <img src="Jean.png" alt="Jean Denise Dalisay">
+                    <p class="role">Programmer (Admin Portal)</p>
+                    <p class="course">BSIT 4A</p>
+                </div>
+                <div class="team-card" id="teamCard3">
+                    <span class="dev-name-oval-team">Divine Fradejas</span>
+                    <img src="DIVINE.png" alt="Divine Fradejas">
+                    <p class="role">Assistant Programmer (Admin Portal)</p>
+                    <p class="course">BSIT 4A</p>
+                </div>
+                <div class="team-card" id="teamCard4">
+                    <span class="dev-name-oval-team">Cristine Joy Bonifacio</span>
+                    <img src="CJ.png" alt="Cristine Joy Bonifacio">
+                    <p class="role">UI and UX Designer</p>
+                    <p class="course">BSIT 4A</p>
+                </div>
+            </div>
+            
+            <div style="text-align:center; margin-top: 3rem; color: var(--muted); font-size: 1.1rem; font-weight: 500;">
+                <i class="fas fa-user-tie" style="color: var(--primary); margin-right: 8px;"></i> Adviser: Daryl M. Factor
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer id="mainFooter">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>RSU SAFESPACE</h3>
+                    <p>A capstone project developed by BSIT students at Romblon State University. This web-based platform enhances the Guidance Counseling Service Office (GCSO) through digital innovation.</p>
+                    <div class="social-icons">
+                        <a href="https://www.facebook.com/profile.php?id=100064086760549" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><i class="fas fa-phone-alt"></i><a href="#hotlines">Hotline</a></li>
+                        <li><i class="fas fa-star"></i><a href="#services">Platform Features</a></li>
+                        <li><i class="fas fa-info-circle"></i><a href="#about">About The Project</a></li>
+                        <li><i class="fas fa-bullseye"></i><a href="#mission">Mission & Vision</a></li>
+                        <li><i class="fas fa-sign-in-alt"></i><a href="counselor_login.html">Access Portals</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Contact RSU SAFESPACE</h3>
+                    <ul>
+                        <li><i class="fas fa-university"></i> Guidance Counseling Service Office</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Romblon State University Main Campus</li>
+                        <li><i class="fas fa-phone"></i> 09100230428</li>
+                        <li><i class="fas fa-envelope"></i>rsusafespace@gmail.com</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Project Info</h3>
+                    <ul>
+                        <li><i class="fas fa-code"></i> Technologies: HTML, CSS, JS, Firebase</li>
+                        <li><i class="fas fa-users"></i> Developer Team: BSIT Students 2025</li>
+                        <li><i class="fas fa-user-tie"></i> Adviser: Daryl M. Factor</li>
+                        <li><i class="fas fa-graduation-cap"></i> College: CCMADI, RSU</li>
+                        <li><i class="fas fa-calendar"></i> Completion: December 2025</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2025 RSU Safespace - Capstone Project. All rights reserved. | Romblon State University - College of Computing, Multimedia Arts, and Digital Innovation</p>
+                <p style="margin-top: 10px;">This platform is for academic purposes and complies with the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Confidentiality Modal Logic
+        function getPortalBtn() {
+            // Try both nav and header for the Access Your Portal button
+            return document.querySelector('a.btn[href="counselor_login.html"]');
+        }
+        const portalBtn = getPortalBtn();
+        const modalBg = document.getElementById('confidentialityModalBg');
+        const acceptBtn = document.getElementById('confidentialityAccept');
+        const cancelBtn = document.getElementById('confidentialityCancel');
+        let portalUrl = '';
+        if (portalBtn) {
+            portalUrl = portalBtn.getAttribute('href');
+            portalBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                modalBg.classList.add('active');
+            });
+        }
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', function() {
+                modalBg.classList.remove('active');
+                if (portalUrl) {
+                    window.open(portalUrl, '_blank');
+                }
+            });
+        }
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                modalBg.classList.remove('active');
+            });
+        }
+        
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navMenu = document.getElementById('navMenu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+            mobileMenuBtn.innerHTML = navMenu.classList.contains('active') 
+                ? '<i class="fas fa-times"></i>' 
+                : '<i class="fas fa-bars"></i>';
+        });
+        
+        // Close mobile menu when clicking a link
+        const navLinks = document.querySelectorAll('nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            });
+        });
+        
+        // GCSO Highlights Slideshow
+        (function() {
+            const slides = document.querySelectorAll('.highlight-slide');
+            const prevBtn = document.querySelector('.highlight-prev');
+            const nextBtn = document.querySelector('.highlight-next');
+            const dots = document.querySelectorAll('.highlight-dot');
+            let current = 0;
+            
+            function showSlide(idx) {
+                slides.forEach((slide, i) => {
+                    slide.style.display = i === idx ? 'block' : 'none';
+                    slide.style.animation = i === idx ? 'slideIn 0.8s ease' : 'none';
+                });
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === idx);
+                });
+                current = idx;
+            }
+            
+            prevBtn.addEventListener('click', () => {
+                showSlide((current - 1 + slides.length) % slides.length);
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                showSlide((current + 1) % slides.length);
+            });
+            
+            dots.forEach((dot, i) => {
+                dot.addEventListener('click', () => showSlide(i));
+            });
+            
+            // Auto-slide every 6 seconds
+            setInterval(() => {
+                showSlide((current + 1) % slides.length);
+            }, 6000);
+            
+            showSlide(0);
+        })();
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if(targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if(targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Scroll-triggered animations
+        function checkScroll() {
+            // Header effect on scroll
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+            
+            // Animate elements when they come into view
+            const animatedElements = [
+                { id: 'servicesTitle', class: 'section-title' },
+                { id: 'serviceCard1', class: 'service-card' },
+                { id: 'serviceCard2', class: 'service-card' },
+                { id: 'serviceCard3', class: 'service-card' },
+                { id: 'serviceCard4', class: 'service-card' },
+                { id: 'serviceCard5', class: 'service-card' },
+                { id: 'serviceCard6', class: 'service-card' },
+                { id: 'missionTitle', class: 'section-title' },
+                { id: 'missionCard', class: 'mv-card' },
+                { id: 'visionCard', class: 'mv-card' },
+                { id: 'hotlinesTitle', class: 'section-title' },
+                { id: 'highlightsTitle', class: 'section-title' },
+                { id: 'highlightsSlideshow', class: 'highlights-slideshow' },
+                { id: 'aboutTitle', class: 'section-title' },
+                { id: 'aboutText', class: 'about-text' },
+                { id: 'aboutImage', class: 'about-image' },
+                { id: 'developersTitle', class: 'section-title' },
+                { id: 'leaderCard', class: 'leader-card' },
+                { id: 'teamCard1', class: 'team-card' },
+                { id: 'teamCard2', class: 'team-card' },
+                { id: 'teamCard3', class: 'team-card' },
+                { id: 'teamCard4', class: 'team-card' },
+                { id: 'mainFooter', class: 'footer' }
+            ];
+            
+            animatedElements.forEach(element => {
+                const el = document.getElementById(element.id);
+                if (el) {
+                    const elementTop = el.getBoundingClientRect().top;
+                    const windowHeight = window.innerHeight;
+                    
+                    if (elementTop < windowHeight - 100) {
+                        el.classList.add('animated');
+                    }
+                }
+            });
+        }
+        
+        // Set initial state for animated elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial check
+            checkScroll();
+            
+            // Add some random floating animations to service icons
+            const serviceIcons = document.querySelectorAll('.service-icon');
+            serviceIcons.forEach((icon, index) => {
+                icon.style.animationDelay = `${index * 0.2}s`;
+            });
+        });
+        
+        // Check scroll on load and scroll
+        window.addEventListener('scroll', checkScroll);
+        window.addEventListener('load', checkScroll);
+        
+        // Add hover effects to service cards
+        const serviceCards = document.querySelectorAll('.service-card');
+        serviceCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+        
+        // Add hover effects to leader and team cards
+        const leaderCard = document.querySelector('.leader-card');
+        const teamCards = document.querySelectorAll('.team-card');
+        
+        if (leaderCard) {
+            leaderCard.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            leaderCard.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        }
+        
+        teamCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.03)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+        
+        // Add a subtle pulse animation to CTA buttons periodically
+        setInterval(() => {
+            const ctaButtons = document.querySelectorAll('.btn-primary, .btn');
+            ctaButtons.forEach(btn => {
+                btn.classList.add('bounce');
+                setTimeout(() => {
+                    btn.classList.remove('bounce');
+                }, 2000);
+            });
+        }, 8000);
+        
+        // Add parallax effect to hero section
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            if (hero) {
+                hero.style.transform = `translateY(${scrolled * 0.05}px)`;
+            }
+        });
+        
+        // Add typing effect to hero title (optional)
+        const heroTitle = document.querySelector('.hero h2');
+        if (heroTitle) {
+            const originalText = heroTitle.textContent;
+            heroTitle.textContent = '';
+            let i = 0;
+            
+            function typeWriter() {
+                if (i < originalText.length) {
+                    heroTitle.textContent += originalText.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 50);
+                }
+            }
+            
+            // Start typing effect after page loads
+            setTimeout(typeWriter, 500);
+        }
+    </script>
+</body>
+</html>
