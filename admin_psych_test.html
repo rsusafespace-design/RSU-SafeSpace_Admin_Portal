@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Psychological Test Results</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Prevent browser caching of this page
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', window.location.href);
+        }
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
+    <style>
+        /* --- START OF SHARED STYLES (MATCHED TO admin_dashboard.html) --- */
+        html, body { /* Added 'html,' and '!important' for Tailwind override */
+            font-family: Arial, sans-serif !important;
+            margin: 0;
+            background-color: #f4f7fa;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* HEADER & TOP BAR STYLES */
+        .header-and-sidebar-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1400;
+            display: flex;
+            background-color: #1e8e3e;
+            color: #f0f3f6;
+            height: 60px;
+            transition: left 0.3s ease;
+        }
+        .sidebar-top {
+            width: 250px;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            height: 60px;
+            transition: width 0.3s ease;
+        }
+        .sidebar-top.collapsed {
+            width: 80px;
+            justify-content: center;
+        }
+        .sidebar-top.collapsed .sidebar-logo {
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease, width 0.3s ease;
+        }
+        .sidebar-logo img {
+            height: 40px;
+        }
+        .sidebar-logo span {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            white-space: nowrap;
+        }
+        .menu-icon {
+            cursor: pointer;
+            font-size: 24px;
+            margin-left: auto;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+        }
+        .menu-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        .menu-icon:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        /* Skeleton / shimmer loading styles (page-local) */
+        .skeleton-line { height: 14px; border-radius: 8px; background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+        .skeleton-circle { width:40px; height:40px; border-radius:50%; background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%); background-size:200% 100%; animation: shimmer 1.2s linear infinite; }
+        .skeleton-h1 { height:20px; width:220px; border-radius:8px; }
+        .skeleton-h2 { height:16px; width:160px; border-radius:8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .main-top-bar {
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px; 
+        }
+        .main-top-bar .portal-title {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .main-top-bar .user-info {
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+        .main-top-bar .user-info .material-icons {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        .main-top-bar .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            color: #1e8e3e; 
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 18px;
+        }
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: 250px;
+            background: #f0f3f6;
+            border-right: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: calc(100vh - 60px);
+            z-index: 999;
+            overflow: auto;
+            transition: width 0.3s ease;
+        }
+        .nav-menu ul {
+            list-style: none;
+            padding: 12px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .nav-item {
+            color: #1f2937;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 10px;
+            border-radius: 8px;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 400;
+            font-size: 15px;
+            transition: background 0.2s, color 0.2s;
+            text-align: left;
+            width: 100%;
+        }
+        .nav-item:hover {
+            background: rgba(15,122,52,0.08) !important;
+            color: #0f7a34 !important;
+            font-weight: 400 !important;
+            border-radius: 8px !important;
+        }
+        .nav-item.active {
+            background: rgba(15,122,52,0.12) !important;
+            color: #0f7a34 !important;
+            font-weight: 600 !important;
+        }
+        .nav-item:hover .icon,
+        .nav-item.active .icon {
+            color: #1f2937 !important;
+        }
+        .nav-item .icon {
+            width: 28px;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            line-height: 1;
+            color: #1f2937;
+            transition: color 0.2s;
+        }
+        .nav-item .label {
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        .sidebar.collapsed .nav-item .label {
+            display: none;
+        }
+        .sidebar.collapsed .nav-item .icon {
+            width: 56px;
+            font-size: 26px;
+            justify-content: center;
+        }
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px 6px;
+            gap: 0;
+        }
+        /* --- END OF SHARED STYLES --- */
+
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .sidebar.collapsed {
+                width: 280px;
+                transform: translateX(-100%);
+            }
+        }
+        /* MAIN CONTENT STYLES */
+        .main-content {
+            position: fixed;
+            top: 60px; 
+            left: 250px; 
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: auto; /* internal scrolling */
+            padding: 30px;
+            transition: left 0.3s ease;
+            min-height: auto;
+            background: transparent;
+        }
+
+        .main-content.shifted {
+            left: 80px; /* when sidebar collapses */
+        }
+        
+        /* Mobile overlay and responsive content */
+        @media (max-width: 768px) {
+            .main-content {
+                left: 0 !important; /* full width on small screens */
+                padding: 20px 15px;
+            }
+            .main-content.shifted {
+                left: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 15px 10px;
+            }
+        }
+        /* --- END OF SHARED STYLES --- */
+
+        /* --- START OF CUSTOM STYLES FOR REPLACED CONTENT --- */
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px;
+        }
+        .sidebar-footer .nav-item { display:flex; align-items:center; gap:12px; padding:10px; border-radius:8px; }
+        .sidebar-footer .nav-item .label { transition: opacity 0.15s ease; }
+        .sidebar.collapsed .sidebar-footer .nav-item .label { display:none; }
+        .sidebar-footer { z-index: 1000; }
+        
+    /* Profile dropdown styles (shared across pages) */
+    .profile-dropdown .profile-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 12px 34px rgba(2,6,23,0.12), 0 4px 10px rgba(2,6,23,0.06);
+      overflow: hidden;
+      animation: fadeIn .12s ease;
+      transition: transform .14s ease, box-shadow .14s ease, opacity .12s ease;
+      transform-origin: top right;
+    }
+    .profile-card-top { display:flex; justify-content:center; padding:14px 12px 6px; }
+    .avatar-large {
+      width:120px; height:120px; border-radius:50%; background:#f3faf5; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:32px; position:relative; overflow:hidden; border:4px solid rgba(16,185,129,0.06);
+    }
+    .avatar-large img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .18s ease; box-shadow: 0 6px 18px rgba(2,6,23,0.08); }
+    .avatar-large:hover img { transform: scale(1.02); }
+    .avatar-camera { position:absolute; right:6px; bottom:6px; border-radius:50%; background:#fff; border:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 12px rgba(2,6,23,0.06); cursor:pointer; font-size:13px; }
+    .profile-card-body { padding: 10px 18px 16px; text-align:center; display:flex; flex-direction:column; gap:8px; }
+    .profile-email { font-size:13px; color:#6b7280; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .profile-greeting { font-weight:700; font-size:18px; margin-top:4px; color:#111827; }
+    .manage-btn { display:inline-block; width:100%; padding:10px 12px; border-radius:999px; border:1px solid rgba(16,185,129,0.12); background:#10b981; color:#fff; font-weight:700; box-shadow:none; cursor:pointer; }
+    .manage-btn:hover { transform:none; filter:brightness(.98); }
+    .profile-divider { height:1px; background:#f1f5f9; margin:8px 0; }
+    .profile-actions { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .profile-link { flex:1; text-align:left; border:0; background:transparent; padding:8px; color:#374151; font-weight:600; cursor:pointer; }
+    .signout-link { flex:1; text-align:right; border:0; background:transparent; padding:8px; color:#ef4444; font-weight:700; cursor:pointer; }
+    @media (max-width:420px) { .profile-dropdown { right:8px !important; left:8px !important; min-width:auto; } }
+    .profile-dropdown[aria-hidden="false"] .profile-card { transform: translateY(-6px); box-shadow: 0 20px 54px rgba(2,6,23,0.16), 0 6px 18px rgba(2,6,23,0.06); }
+
+    .icon-btn { background: transparent !important; border: 0 !important; outline: none !important; box-shadow: none !important; padding: 6px; display: inline-flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+    .icon-btn:focus, .icon-btn:active {
+        outline: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* popover / dropdown visibility controlled by attributes */
+    .popover { display: none; }
+    .popover[data-open="true"] { display: block; }
+    .dropdown { display: none; }
+    .dropdown[aria-hidden="false"] { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Make sidebar logout text/icon red on hover/focus and keyboard focus */
+    #sidebarLogoutBtn { cursor: pointer; }
+    #sidebarLogoutBtn .label, #sidebarLogoutBtn .icon {
+        color: inherit;
+        transition: color 160ms ease-in-out, transform 120ms ease;
+    }
+    /* Hover and focus (mouse) */
+    #sidebarLogoutBtn:hover .label,
+    #sidebarLogoutBtn:hover .icon {
+        color: #ef4444 !important; /* red text/icon on hover */
+    }
+    /* Keyboard focus visible for accessibility */
+    #sidebarLogoutBtn:focus-visible .label,
+    #sidebarLogoutBtn:focus-visible .icon {
+        color: #ef4444 !important; /* red text/icon on keyboard focus */
+    }
+        /* Added from try.html to support the accordion effect's rotation */
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        
+        /* Custom styles for the upload form */
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background-color: #f9fafb;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .file-icon {
+            color: #6b7280;
+        }
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .progress-bar {
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #10b981;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Student list styles */
+        .student-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .student-card:hover {
+            border-color: #10b981;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .student-card.selected {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .test-result-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .test-result-item:hover {
+            border-color: #10b981;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        /* --- END OF CUSTOM STYLES FOR REPLACED CONTENT --- */
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+    <div class="header-and-sidebar-top">
+        <aside class="sidebar-top" id="sidebarTop">
+            <div class="sidebar-logo">
+                <img src="safespace.png" alt="SafeSpace Logo">
+                <span>SafeSpace</span>
+            </div>
+            <i class="material-icons menu-icon" id="menuIcon">menu</i>
+        </aside>
+        <header class="main-top-bar">
+            <h1 class="portal-title">Admin Portal</h1>
+            <div class="user-info">
+                <div class="top-greeting" aria-live="polite" style="margin-right:12px; text-align:right; color:#fff; margin-left:8px;">
+                    <div id="topGreetingName" style="font-weight:700; font-size:14px;">Good Morning, Admin</div>
+                    <div id="topGreetingTime" style="font-size:12px; opacity:0.95; margin-top:2px;">Tuesday, Oct 14, 2025 — 02:51 AM</div>
+                </div>
+                <div style="position:relative;display:inline-block;">
+                    <button id="notifBtn" class="icon-btn" aria-expanded="false" title="Notifications" style="color:white;background:#16a34a;padding:8px;border-radius:8px;border:0;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(22,163,74,0.15);">
+                        <i class="material-icons" style="color:white;font-size:20px;">notifications</i>
+                    </button>
+                    <div id="notifPanel" class="popover" data-open="false" style="position:fixed;right:20px;top:62px;min-width:280px;z-index:4500;display:none;">
+                        <div class="notif-card" role="dialog" aria-label="Notifications" aria-hidden="true" style="border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(2,6,23,0.08);background:#fff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-width:280px;">
+                            <div class="notif-header popover-header" style="background:#10b981;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+                                <div class="notif-title" style="font-weight:700;font-size:15px;">Notifications</div>
+                                <div id="notifTimestamp" class="notif-timestamp" style="font-size:12px;opacity:0.95;">--</div>
+                            </div>
+                            <div id="notifList" class="popover-body" style="color:#111827;padding:8px 12px;">
+                                <div class="popover-empty">No new notifications.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="position:relative;display:inline-block;margin-left:-8px;">
+                    <button id="profileBtn" class="user-avatar" aria-haspopup="true" aria-expanded="false" title="Profile" style="border:0;cursor:pointer;padding:0;position:relative;overflow:hidden;">
+                        <div id="profileBtnSpinner" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none">
+                            <svg width="28" height="28" viewBox="0 0 50 50" aria-hidden="true">
+                                <circle cx="25" cy="25" r="18" fill="#ffffff" opacity="0.2"></circle>
+                                <path fill="#10B981" d="M25 5a20 20 0 0 1 0 6a14 14 0 1 0 0 28 14 14 0 0 1 0-34">
+                                    <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                                </path>
+                            </svg>
+                        </div>
+                        <div id="profileBtnDefaultIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+                            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="#9CA3AF"></path>
+                                <path d="M3 20c0-2.761 4.477-5 9-5s9 2.239 9 5v1H3v-1z" fill="#9CA3AF"></path>
+                            </svg>
+                        </div>
+                    </button>
+                    <div id="profileDropdown" class="dropdown profile-dropdown" aria-hidden="true" style="position:fixed;right:20px;top:62px;min-width:320px;z-index:3000;">
+                        <div style="background:#fff;border-radius:12px;padding:10px;min-width:320px;box-shadow:0 12px 30px rgba(2,6,23,0.12);font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;">
+                            <div style="display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                                <div class="avatar-large" id="profileAvatar" style="width:80px;height:80px;border-radius:60px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;font-size:18px"></div>
+                                <div style="flex:1;min-width:0">
+                                    <div id="profileGreeting" style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hi, Admin</div>
+                                    <div id="profileEmail" style="font-size:13px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">you@example.com</div>
+                                </div>
+                            </div>
+                            <div style="padding:8px 6px;display:flex;flex-direction:column;gap:6px">
+                                <button id="accountEdit" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                                    <i class="material-icons icon" style="font-size:18px;line-height:1;">person</i>
+                                    <span style="flex:1;text-align:left">Manage your profile</span>
+                                </button>
+                                <button id="accountSettings" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                                    <i class="material-icons icon" style="font-size:18px;line-height:1;">settings</i>
+                                    <span style="flex:1;text-align:left">Settings & privacy</span>
+                                    <i class="material-icons icon" style="font-size:16px;opacity:0.7;">chevron_right</i>
+                                </button>
+                                <button id="accountLogout" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px;color:#111;font-weight:600">
+                                    <i class="material-icons icon" style="font-size:18px;line-height:1;color:#ef4444">logout</i>
+                                    <span style="flex:1;text-align:left">Log Out</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <nav class="nav-menu">
+                <nav class="nav" id="nav" style="display:flex;flex-direction:column;gap:8px;padding:12px;">
+                    <button class="nav-item" onclick="location.href='admin_dashboard.html'" data-name="Dashboard">
+                        <span class="material-icons icon" style="font-size:26px;">dashboard</span>
+                        <span class="label" style="font-size:15px;">Home</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_user_management.html'" data-name="User Management">
+                        <span class="material-icons icon" style="font-size:26px;">groups</span>
+                        <span class="label" style="font-size:15px;">Student Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_counselor_management.html'" data-name="Counselor Management">
+                        <span class="material-icons icon" style="font-size:26px;">psychology</span>
+                        <span class="label" style="font-size:15px;">Counselor Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_content_management.html'" data-name="Content Management">
+                        <span class="material-icons icon" style="font-size:26px;">description</span>
+                        <span class="label" style="font-size:15px;">Content Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_report_management.html'" data-name="Reports Management">
+                        <span class="material-icons icon" style="font-size:26px;">warning</span>
+                        <span class="label">Reports Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_session_report.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">fact_check</span>
+                        <span class="label">Session Reports</span>
+                    </button>
+                    <button class="nav-item active" onclick="location.href='admin_psych_test.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">assessment</span>
+                        <span class="label">Psychological Test</span>
+                    </button> 
+                    <button class="nav-item" onclick="location.href='admin_settings.html'" data-name="System Settings">
+                        <span class="material-icons icon" style="font-size:26px;">settings</span>
+                        <span class="label" style="font-size:15px;">System Settings</span>
+                    </button>
+                </nav>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="nav-item" id="sidebarLogoutBtn" type="button" title="Sign out">
+                    <i class="material-icons icon" style="font-size:26px;">logout</i>
+                    <span class="label" style="font-size:15px;">Logout</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- MAIN CONTENT AREA - UPDATED FOR PSYCHOLOGICAL TEST RESULTS UPLOAD -->
+        <main class="main-content" id="mainContent">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                
+                <!-- FILTERS AND SEARCH -->
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Search Students</label>
+                            <div class="relative">
+                                <input type="text" id="searchStudents" placeholder="Search by name or student ID" class="w-full border border-gray-300 rounded-lg p-2 pl-10 focus:ring-green-400 focus:outline-none">
+                                <i class="material-icons absolute left-3 top-2.5 text-gray-400 text-lg">search</i>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Campus</label>
+                            <select id="campusFilter" class="border border-gray-300 rounded-lg p-2 focus:ring-green-400 focus:outline-none w-full md:w-40">
+                                <option value="">All Campuses</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">College</label>
+                            <select id="collegeFilter" class="border border-gray-300 rounded-lg p-2 focus:ring-green-400 focus:outline-none w-full md:w-40">
+                                <option value="">All Colleges</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                            <select id="courseFilter" class="border border-gray-300 rounded-lg p-2 focus:ring-green-400 focus:outline-none w-full md:w-40">
+                                <option value="">All Courses</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Year Level</label>
+                            <select id="yearFilter" class="border border-gray-300 rounded-lg p-2 focus:ring-green-400 focus:outline-none w-full md:w-40">
+                                <option value="">All Years</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- STUDENTS LIST -->
+                <div class="bg-white rounded-lg overflow-hidden border border-gray-200">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-green-600 text-white">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Student ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Course & Year</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Test Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Tests Uploaded</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="studentsTableBody">
+                                <!-- Students will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- PAGINATION -->
+                    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+                            <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</button>
+                        </div>
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Showing <span id="showFrom" class="font-medium">1</span> to <span id="showTo" class="font-medium">8</span> of <span id="showTotal" class="font-medium">0</span> students
+                                </p>
+                            </div>
+                            <div>
+                                <nav id="studentsPaginationNav" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                    <button id="studentsPrevBtn" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">Previous</span>
+                                        <i class="material-icons text-sm">chevron_left</i>
+                                    </button>
+                                    <div id="studentsPageButtons" class="inline-flex"></div>
+                                    <button id="studentsNextBtn" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        <span class="sr-only">Next</span>
+                                        <i class="material-icons text-sm">chevron_right</i>
+                                    </button>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- UPLOAD MODAL -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-800">Upload Test Results</h3>
+                    <button class="close-modal text-gray-400 hover:text-gray-600">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <!-- SELECTED STUDENT INFO -->
+                    <div class="bg-green-50 p-4 rounded-lg mb-6" id="selectedStudentInfo">
+                        <!-- Student info will be populated here -->
+                    </div>
+                    
+                    <!-- TEST INFORMATION -->
+                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">Test Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Test Type</label>
+                                <select id="testType" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-green-400 focus:outline-none">
+                                    <option value="">Select test type</option>
+                                    <option value="personality">Personality Assessment</option>
+                                    <option value="anxiety">Anxiety Scale</option>
+                                    <option value="depression">Depression Inventory</option>
+                                    <option value="iq">IQ Test</option>
+                                    <option value="aptitude">Aptitude Test</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Test Date</label>
+                                <input type="date" id="testDate" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-green-400 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                            <textarea id="testNotes" rows="3" placeholder="Add any notes about this test..." class="w-full border border-gray-300 rounded-lg p-2 focus:ring-green-400 focus:outline-none"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- FILE UPLOAD SECTION -->
+                    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">Upload Test Results</h3>
+                        
+                        <div class="upload-area" id="uploadArea">
+                            <i class="material-icons text-4xl text-gray-400 mb-2">cloud_upload</i>
+                            <p class="text-gray-600 mb-2">Drag and drop your files here</p>
+                            <p class="text-gray-500 text-sm mb-4">or</p>
+                            <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden">
+                            <button id="browseBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                Browse Files
+                            </button>
+                            <p class="text-gray-500 text-xs mt-2">Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max 10MB each)</p>
+                        </div>
+                        
+                        <div id="fileList" class="mt-4 file-list hidden">
+                            <h4 class="text-md font-medium text-gray-800 mb-2">Selected Files</h4>
+                            <div id="fileItems" class="space-y-2">
+                                <!-- File items will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ACTION BUTTONS -->
+                    <div class="flex justify-end gap-4 mt-6">
+                        <button class="cancel-upload bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                        <button id="uploadBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="material-icons text-sm">cloud_upload</i>
+                            Upload Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPLOAD CONFIRM MODAL (applies Content Management style confirmation) -->
+    <div class="modal" id="uploadConfirmModal" aria-hidden="true" style="display:none;">
+        <div class="modal-content">
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-800">Confirm Upload</h3>
+                    <button id="uploadConfirmClose" class="text-gray-400 hover:text-gray-600">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-gray-700 mb-4">You're about to upload the following files for the selected student. Review and confirm.</p>
+                    <div id="confirmFileList" class="file-list mb-4"></div>
+                    <div class="flex justify-end gap-4">
+                        <button id="uploadConfirmCancel" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg">Cancel</button>
+                        <button id="uploadConfirmBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">Confirm Upload</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERIC ALERT MODAL -->
+    <div class="modal" id="alertModal" aria-hidden="true" style="display:none;">
+        <div class="modal-content">
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h3 id="alertModalTitle" class="text-xl font-bold text-gray-800">Notice</h3>
+                    <button id="alertModalClose" class="text-gray-400 hover:text-gray-600">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div id="alertModalMessage" class="text-sm text-gray-700"></div>
+                    <div class="flex justify-end mt-6">
+                        <button id="alertModalOk" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW MODAL -->
+    <div class="modal" id="viewModal">
+        <div class="modal-content">
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-800">Test Results</h3>
+                    <button class="close-modal text-gray-400 hover:text-gray-600">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                
+                <div class="p-6">
+                    <!-- SELECTED STUDENT INFO -->
+                    <div class="bg-blue-50 p-4 rounded-lg mb-6" id="viewStudentInfo">
+                        <!-- Student info will be populated here -->
+                    </div>
+                    
+                    <!-- TEST RESULTS LIST -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-4">Test Results History</h3>
+                        <div id="testResultsList" class="space-y-4">
+                            <!-- Test results will be populated here -->
+                        </div>
+                        <div id="noResultsMessage" class="text-center py-8 text-gray-500 hidden">
+                            <i class="material-icons text-4xl mb-2">folder_open</i>
+                            <p>No test results found for this student.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- ACTION BUTTONS -->
+                    <div class="flex justify-end gap-4 mt-6">
+                        <button class="close-modal bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-lg transition-colors">
+                            Close
+                        </button>
+                        <button id="uploadNewBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                            <i class="material-icons text-sm">add</i>
+                            Upload New Test
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="confirmModalLogout" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3000">
+        <div style="background:#fff;border-radius:12px;padding:18px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+            <h3 id="confirmModalLogoutTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm</h3>
+            <div id="confirmModalLogoutMessage" style="font-size:15px;margin-bottom:12px;color:#111">Are you sure you want to sign out?</div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button id="confirmModalLogoutCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                <button id="confirmModalLogoutOk" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // The original script content for sidebar and mobile responsiveness is kept here.
+        const menuIcon = document.getElementById('menuIcon');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarTop = document.getElementById('sidebarTop'); 
+        
+        // Create overlay for mobile
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        
+        // Mobile detection
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Toggle sidebar with mobile responsiveness
+        menuIcon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isMobile()) {
+                // Mobile behavior - overlay sidebar
+                const isOpen = sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active', isOpen);
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            } else {
+                // Desktop behavior - collapse sidebar
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            }
+        });
+        
+        // Close mobile sidebar when clicking overlay
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                // Reset mobile states when switching to desktop
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                // Ensure desktop state is consistent
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            } else {
+                // Reset desktop states when switching to mobile
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+        
+        // Close mobile sidebar when clicking a menu item
+        document.querySelectorAll('.nav-item').forEach(link => { 
+            link.addEventListener('click', () => {
+                if (isMobile()) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+        
+        // Initialize state for desktop on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isMobile()) {
+                // Default to uncollapsed on desktop 
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+        
+        // JAVASCRIPT FOR ACCORDION FUNCTIONALITY
+        function toggleSection(id) {
+            const section = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                section.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+    </script>
+    <script type="module">
+        // Note: This module requires the Firebase helpers exported by `admin_main.js`.
+        import { requireAdminAuth, setTheme, getTheme, get, ref, db, fmtTime, enableSearchFilter, auth, onAuthStateChanged, isAdminUid } from './admin_main.js';
+        import { loadAdminProfileInto, startGreetingClock } from './admin_profile_loader.js';
+
+        requireAdminAuth();
+        loadAdminProfileInto({ greetingSelector: '#topGreetingName', avatarSelector: '.main-top-bar .user-avatar', timeSelector: '#topGreetingTime' });
+        startGreetingClock('#topGreetingName', '#topGreetingTime');
+
+        // Wire theme radios (applies globally via admin_main.js)
+        const radios = document.querySelectorAll('.theme-radio');
+        if (radios && radios.length) {
+            // initialize checked state from stored theme
+            try {
+                const current = getTheme ? getTheme() : (localStorage.getItem('safespace_theme') || 'system');
+                radios.forEach(r => { r.checked = (r.value === (current || 'system')); });
+            } catch (e) {
+                radios.forEach(r => { r.checked = (r.value === 'system'); });
+            }
+
+            radios.forEach(r => r.addEventListener('change', (e) => {
+                const val = e.target.value;
+                try { if (typeof setTheme === 'function') setTheme(val); else window.setTheme && window.setTheme(val); } catch (err) { console.error('setTheme error', err); }
+            }));
+        }
+    </script>
+    <script src="./profile_dropdown.js"></script>
+    <script type="module">
+    // Psychological Test Results Upload Functionality
+    // Using the same approach as Content Management page
+    import { app } from './admin_main.js';
+    import { getDatabase, ref, push, onValue, remove, set, serverTimestamp, get, onChildAdded, onChildRemoved, onChildChanged } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js';
+
+    const db = getDatabase(app);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const studentsTableBody = document.getElementById('studentsTableBody');
+        const searchStudents = document.getElementById('searchStudents');
+    const campusFilter = document.getElementById('campusFilter');
+    const collegeFilter = document.getElementById('collegeFilter');
+    const courseFilter = document.getElementById('courseFilter');
+    const yearFilter = document.getElementById('yearFilter');
+        const uploadModal = document.getElementById('uploadModal');
+        const viewModal = document.getElementById('viewModal');
+        const testResultsList = document.getElementById('testResultsList');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        const selectedStudentInfo = document.getElementById('selectedStudentInfo');
+        const viewStudentInfo = document.getElementById('viewStudentInfo');
+        const testType = document.getElementById('testType');
+        const testDate = document.getElementById('testDate');
+        const testNotes = document.getElementById('testNotes');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const browseBtn = document.getElementById('browseBtn');
+        const fileList = document.getElementById('fileList');
+        const fileItems = document.getElementById('fileItems');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadNewBtn = document.getElementById('uploadNewBtn');
+        const uploadConfirmModal = document.getElementById('uploadConfirmModal');
+        const uploadConfirmBtn = document.getElementById('uploadConfirmBtn');
+        const uploadConfirmCancel = document.getElementById('uploadConfirmCancel');
+        const uploadConfirmClose = document.getElementById('uploadConfirmClose');
+        const confirmFileList = document.getElementById('confirmFileList');
+        // Alert modal elements
+        const alertModal = document.getElementById('alertModal');
+        const alertModalTitle = document.getElementById('alertModalTitle');
+        const alertModalMessage = document.getElementById('alertModalMessage');
+        const alertModalOk = document.getElementById('alertModalOk');
+        const alertModalClose = document.getElementById('alertModalClose');
+
+        // Helper to show alert modal
+        function showAlertModal(message, title) {
+            try {
+                if (!alertModal) {
+                    // fallback to native alert if modal missing
+                    window.alert(message);
+                    return;
+                }
+                alertModalTitle.textContent = title || 'Notice';
+                if (typeof message === 'string') {
+                    alertModalMessage.textContent = message;
+                } else {
+                    // allow HTML or nodes in the future
+                    alertModalMessage.textContent = String(message);
+                }
+                alertModal.style.display = 'flex';
+                alertModal.setAttribute('aria-hidden','false');
+                // focus OK button for accessibility
+                setTimeout(() => { try { alertModalOk && alertModalOk.focus(); } catch(e){} }, 50);
+            } catch (e) {
+                console.error('showAlertModal error', e);
+                window.alert(message);
+            }
+        }
+
+        // Activity push helper (writes to same key used by dashboard logger)
+        function pushLocalActivity(text, icon){
+            try{
+                const KEY = 'admin_recent_activity';
+                const MAX = 20;
+                const raw = localStorage.getItem(KEY);
+                let arr = [];
+                if (raw) {
+                    try { arr = JSON.parse(raw) || []; } catch(e){ arr = []; }
+                }
+                arr.unshift({ text: String(text), ts: new Date().toISOString(), icon: icon || '🔔' });
+                try { localStorage.setItem(KEY, JSON.stringify(arr.slice(0,MAX))); } catch(e){}
+            }catch(e){ console.debug('pushLocalActivity failed', e); }
+        }
+        try { window.pushLocalActivity = pushLocalActivity; } catch(e){}
+
+    // Wire alert modal buttons (prevent default/propagation to avoid accidental form submits or navigation)
+    if (alertModalOk) alertModalOk.addEventListener('click', (e) => { e && e.preventDefault && e.preventDefault(); e && e.stopPropagation && e.stopPropagation(); alertModal.style.display = 'none'; alertModal.setAttribute('aria-hidden','true'); });
+    if (alertModalClose) alertModalClose.addEventListener('click', (e) => { e && e.preventDefault && e.preventDefault(); e && e.stopPropagation && e.stopPropagation(); alertModal.style.display = 'none'; alertModal.setAttribute('aria-hidden','true'); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && alertModal && alertModal.style.display === 'flex') { e && e.preventDefault && e.preventDefault(); alertModal.style.display = 'none'; alertModal.setAttribute('aria-hidden','true'); } });
+
+        // Student data + pagination state
+        let students = [];
+        let lastStudentsView = [];
+        let currentPage = 1;
+        const studentsPerPage = 8;
+        let selectedStudent = null;
+        let selectedFiles = [];
+
+        // File upload functionality - SAME AS CONTENT MANAGEMENT
+        browseBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        // Drag and drop functionality - SAME AS CONTENT MANAGEMENT
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        
+        // Handle selected files - SIMILAR TO CONTENT MANAGEMENT
+        function handleFiles(files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showAlertModal(`File "${file.name}" is too large. Maximum size is 10MB.`,'File too large');
+                    continue;
+                }
+                
+                // Check if file already exists
+                if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                    showAlertModal(`File "${file.name}" is already selected.`,'Duplicate file');
+                    continue;
+                }
+                
+                selectedFiles.push(file);
+                addFileToList(file);
+            }
+            
+            if (selectedFiles.length > 0) {
+                fileList.classList.remove('hidden');
+            }
+            
+            validateForm();
+        }
+        
+        // Add file to the file list - SIMILAR TO CONTENT MANAGEMENT
+        function addFileToList(file) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item bg-white rounded-lg border border-gray-200 p-3';
+            const fileExtension = (file.name.split('.').pop() || '').toLowerCase();
+
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info flex items-center gap-3';
+            
+            // File icon based on type
+            const fileIcon = document.createElement('i');
+            fileIcon.className = 'material-icons file-icon';
+            let iconName = 'description';
+            if (fileExtension === 'pdf') iconName = 'picture_as_pdf';
+            else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) iconName = 'image';
+            else if (['doc', 'docx'].includes(fileExtension)) iconName = 'article';
+            fileIcon.textContent = iconName;
+            
+            const fileDetails = document.createElement('div');
+            fileDetails.innerHTML = `
+                <div class="text-sm font-medium text-gray-800">${file.name}</div>
+                <div class="text-xs text-gray-500">${formatFileSize(file.size)}</div>
+                <div class="progress-bar mt-1">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            `;
+            
+            const fileActions = document.createElement('div');
+            fileActions.className = 'file-actions';
+            fileActions.innerHTML = `
+                <button class="text-red-500 hover:text-red-700 delete-file" title="Remove file">
+                    <i class="material-icons text-sm">delete</i>
+                </button>
+            `;
+
+            fileInfo.appendChild(fileIcon);
+            fileInfo.appendChild(fileDetails);
+            fileItem.appendChild(fileInfo);
+            fileItem.appendChild(fileActions);
+            fileItems.appendChild(fileItem);
+
+            // Add delete functionality
+            const deleteBtn = fileItem.querySelector('.delete-file');
+            deleteBtn.addEventListener('click', function() {
+                const index = selectedFiles.findIndex(f => f.name === file.name && f.size === file.size);
+                if (index !== -1) {
+                    selectedFiles.splice(index, 1);
+                    fileItem.remove();
+
+                    if (selectedFiles.length === 0) {
+                        fileList.classList.add('hidden');
+                    }
+
+                    validateForm();
+                }
+            });
+        }
+        
+        // Format file size - SAME AS CONTENT MANAGEMENT
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Validate form
+        function validateForm() {
+            const hasTestType = testType.value !== '';
+            const hasTestDate = testDate.value !== '';
+            const hasFiles = selectedFiles.length > 0;
+            
+            uploadBtn.disabled = !(hasTestType && hasTestDate && hasFiles);
+        }
+        
+        // Form field validation
+        testType.addEventListener('change', validateForm);
+        testDate.addEventListener('change', validateForm);
+
+        // File to Base64 conversion - SAME AS CONTENT MANAGEMENT
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (e) => reject(e);
+        });
+
+        const extractMimeType = (dataUrl) => {
+            const m = dataUrl.match(/^data:([^;]+);base64,/); 
+            return m ? m[1] : 'application/octet-stream';
+        };
+
+        const extractPayload = (dataUrl) => dataUrl.split(',')[1];
+
+        // Load students from database
+        async function loadStudentsFromDb() {
+            const pathsToTry = ['Student','Students','students','student','student_list','users'];
+            for (const path of pathsToTry) {
+                try {
+                    const snap = await get(ref(db, path));
+                    if (snap && snap.exists()) {
+                        const val = snap.val();
+                        const list = [];
+                        if (Array.isArray(val)) {
+                            val.forEach((rec, idx) => {
+                                if (!rec) return;
+                                const key = rec.id || String(idx+1);
+                                list.push(mapStudentRecord(key, rec));
+                            });
+                        } else if (val && typeof val === 'object') {
+                            for (const key of Object.keys(val)) {
+                                const rec = val[key];
+                                if (!rec || typeof rec !== 'object') continue;
+                                list.push(mapStudentRecord(key, rec));
+                            }
+                        }
+                        students = list;
+                        console.info('Loaded', students.length, 'students from', path);
+                        
+                        // Recompute testsUploaded for each student to ensure counts are accurate (fixes stale counts if DB was cleared)
+                        for (const student of students) {
+                            try {
+                                await updateStudentTestStats(student.id);
+                            } catch (e) {
+                                console.warn('Failed to recompute stats for student', student.id, e);
+                            }
+                        }
+                        
+                        populateStudentsTable();
+                        // Populate filter options now that we have students
+                        try { populateFilterOptions(); } catch (e) { /* ignore */ }
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Failed to read', path, err);
+                }
+            }
+            console.info('No students node found in RTDB; students array remains empty.');
+            populateStudentsTable();
+        }
+
+        // Insert table skeleton rows while students are loading
+        function showStudentsSkeleton(rows = 6) {
+            if (!studentsTableBody) return;
+            const cols = 6; // number of columns in table header
+            const skeletonRows = Array.from({length: rows}).map(()=>{
+                return `
+                    <tr class="animate-pulse">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center gap-4">
+                                <div class="skeleton-circle"></div>
+                                <div style="flex:1">
+                                    <div class="skeleton-line" style="width:60%;height:14px;border-radius:8px;margin-bottom:8px"></div>
+                                    <div class="skeleton-line" style="width:40%;height:12px;border-radius:6px"></div>
+                                </div>
+                            </div>
+                        </td>
+                        ${new Array(cols-1).fill(0).map(()=>`<td class="px-6 py-4"><div class="skeleton-line" style="width:80%;"></div></td>`).join('')}
+                    </tr>
+                `;
+            }).join('');
+            studentsTableBody.innerHTML = skeletonRows;
+        }
+
+        function mapStudentRecord(key, rec) {
+            const rawFirst = (rec.first_name || rec.firstname || rec.firstName || '').toString().trim();
+            const rawLast = (rec.last_name || rec.lastname || rec.lastName || '').toString().trim();
+            const combinedFirst = ((rawFirst || '') + (rawLast ? ' ' + rawLast : '')).trim();
+            const fallbackName = (rec.fullname || rec.name || rec.student_name || '').toString().trim();
+            const displayFirst = combinedFirst || fallbackName || '';
+
+            const studentId = rec.student_id || rec.studentId || rec.id || key;
+            const course = rec.course || rec.program || rec.program_name || '';
+            const campus = rec.campus || rec.campus_name || rec.campusName || rec.location || '';
+            const college = rec.college || rec.college_name || rec.collegeName || rec.school || '';
+            const year = String(rec.year || rec.year_level || rec.yearLevel || rec.level || '');
+            const initials = displayFirst ? displayFirst.split(' ').filter(Boolean).map(s => s[0].toUpperCase()).slice(0,2).join('') : (String(studentId).slice(-2).toUpperCase());
+            
+            const lastTestDate = rec.lastTestDate || rec.last_test_date || rec.last_test || '';
+            // Robustly count uploaded tests. If `rec.tests` is an object, only count entries
+            // that are non-null and have content. Fall back to legacy counters when available.
+            let testsUploaded = 0;
+            if (rec.tests && typeof rec.tests === 'object') {
+                try {
+                    testsUploaded = Object.values(rec.tests).filter(v => v !== null && v !== undefined && !(typeof v === 'object' && Object.keys(v).length === 0)).length;
+                } catch (e) {
+                    testsUploaded = 0;
+                }
+            } else {
+                const fallback = rec.test_count || rec.testsUploaded || 0;
+                testsUploaded = Number(fallback) || 0;
+            }
+            
+            const photoUrl = (rec.photo_url || rec.photoURL || rec.photo || rec.profileImage || rec.profile_image || rec.avatar || (rec.profile && (rec.profile.photo || rec.profile.image)) || '');
+
+            return { 
+                id: key, 
+                firstName: displayFirst, 
+                fullName: displayFirst, 
+                first: rawFirst, 
+                lastName: rawLast, 
+                photoUrl: photoUrl || '', 
+                course, 
+                campus,
+                college,
+                year, 
+                studentId, 
+                initials, 
+                lastTestDate: lastTestDate || '', 
+                testsUploaded: String(testsUploaded) 
+            };
+        }
+
+        // Populate students table with pagination support
+        function populateStudentsTable(studentsToShow = students) {
+            // remember the current filtered view so pagination controls can reuse it
+            lastStudentsView = Array.isArray(studentsToShow) ? studentsToShow : [];
+            const total = lastStudentsView.length;
+            const totalPages = Math.max(1, Math.ceil(total / studentsPerPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const startIndex = (currentPage - 1) * studentsPerPage;
+            const endIndex = Math.min(total, startIndex + studentsPerPage);
+            const pageItems = lastStudentsView.slice(startIndex, endIndex);
+
+            // update summary text
+            const fromEl = document.getElementById('showFrom');
+            const toEl = document.getElementById('showTo');
+            const totalEl = document.getElementById('showTotal');
+            if (total === 0) {
+                fromEl.textContent = '0';
+                toEl.textContent = '0';
+            } else {
+                fromEl.textContent = (startIndex + 1).toString();
+                toEl.textContent = (endIndex).toString();
+            }
+            totalEl.textContent = String(total);
+
+            // render rows
+            studentsTableBody.innerHTML = '';
+
+            function getDisplayName(student){ 
+                return (student && (student.firstName || student.fullName || student.name || student.studentId)) || 'Unnamed Student'; 
+            }
+
+            pageItems.forEach(student => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            ${student.photoUrl ? 
+                                `<img src="${student.photoUrl}" alt="${getDisplayName(student)}" class="h-10 w-10 rounded-full object-cover"/>` : 
+                                `<div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-full flex items-center justify-center text-green-800 font-medium">${student.initials}</div>`
+                            }
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${student.firstName}</div>
+                                <div class="text-sm text-gray-500">${student.course}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.studentId}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.course} - ${student.year}${getOrdinalSuffix(student.year)} Year</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${student.lastTestDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">${student.testsUploaded} tests</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <button class="text-green-600 hover:text-green-900 mr-3 upload-btn" data-student-id="${student.id}">Upload</button>
+                        <button class="text-blue-600 hover:text-blue-900 view-btn" data-student-id="${student.id}">View</button>
+                    </td>
+                `;
+                studentsTableBody.appendChild(row);
+            });
+
+            // Add event listeners to buttons
+            document.querySelectorAll('.upload-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studentId = this.getAttribute('data-student-id');
+                    openUploadModal(studentId);
+                });
+            });
+
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studentId = this.getAttribute('data-student-id');
+                    openViewModal(studentId);
+                });
+            });
+
+            // render pagination buttons
+            renderStudentsPagination(total, totalPages, currentPage);
+        }
+
+        function renderStudentsPagination(total, totalPages, activePage) {
+            const container = document.getElementById('studentsPageButtons');
+            const prevBtn = document.getElementById('studentsPrevBtn');
+            const nextBtn = document.getElementById('studentsNextBtn');
+            if (!container || !prevBtn || !nextBtn) return;
+            container.innerHTML = '';
+
+            // Previous/Next enablement
+            prevBtn.disabled = activePage <= 1;
+            nextBtn.disabled = activePage >= totalPages;
+
+            prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; populateStudentsTable(lastStudentsView); } };
+            nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; populateStudentsTable(lastStudentsView); } };
+
+            // Show at most 7 page buttons centered around current
+            const maxButtons = 7;
+            const half = Math.floor(maxButtons/2);
+            let start = Math.max(1, activePage - half);
+            let end = Math.min(totalPages, start + maxButtons - 1);
+            if (end - start < maxButtons - 1) start = Math.max(1, end - maxButtons + 1);
+
+            for (let p = start; p <= end; p++) {
+                const btn = document.createElement('button');
+                btn.className = (p === activePage) ? 'z-10 bg-green-50 border-green-500 text-green-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium';
+                btn.textContent = String(p);
+                btn.onclick = () => { currentPage = p; populateStudentsTable(lastStudentsView); };
+                container.appendChild(btn);
+            }
+        }
+        
+        // Get ordinal suffix
+        function getOrdinalSuffix(num) {
+            if (num === '1') return 'st';
+            if (num === '2') return 'nd';
+            if (num === '3') return 'rd';
+            return 'th';
+        }
+        
+        // Open upload modal
+        function openUploadModal(studentId) {
+            selectedStudent = students.find(s => s.id === studentId);
+            
+            if (selectedStudent) {
+                // Populate student info
+                selectedStudentInfo.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12 bg-green-100 rounded-full flex items-center justify-center text-green-800 font-medium text-lg">${selectedStudent.initials}</div>
+                        <div class="ml-4">
+                            <div class="text-md font-medium text-gray-900">${selectedStudent.firstName}</div>
+                            <div class="text-sm text-gray-500">${selectedStudent.course} - ${selectedStudent.year}${getOrdinalSuffix(selectedStudent.year)} Year</div>
+                            <div class="text-xs text-gray-400 mt-1">ID: ${selectedStudent.studentId}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Reset form
+                testType.value = '';
+                testDate.value = new Date().toISOString().split('T')[0];
+                testNotes.value = '';
+                selectedFiles = [];
+                fileItems.innerHTML = '';
+                fileList.classList.add('hidden');
+                uploadBtn.disabled = true;
+                
+                // Show modal
+                uploadModal.classList.add('active');
+                // Open dialog is a quick UI action; do not log to Recent Activity to avoid noise.
+            }
+        }
+
+        // PERFORM UPLOAD - USING CONTENT MANAGEMENT APPROACH
+        async function performConfirmedUpload() {
+            if (!selectedStudent) { 
+                showAlertModal('No student selected','Upload'); 
+                return; 
+            }
+            
+            if (!testType.value || !testDate.value) {
+                showAlertModal('Please fill in all required test information','Upload');
+                return;
+            }
+            
+            try {
+                uploadConfirmBtn.disabled = true;
+                uploadConfirmBtn.innerHTML = 'Uploading...';
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<i class="material-icons text-sm">hourglass_empty</i> Uploading...';
+
+                // Upload files using Content Management approach
+                const uploadResults = [];
+                
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    try {
+                        const dataUrl = await fileToBase64(file);
+                        const fileData = {
+                            filename: file.name,
+                            size: file.size,
+                            mimeType: extractMimeType(dataUrl),
+                            data: extractPayload(dataUrl),
+                            uploadDate: serverTimestamp()
+                        };
+                        uploadResults.push(fileData);
+                        
+                        // Update progress bar
+                        const progressBars = document.querySelectorAll('.progress-fill');
+                        if (progressBars && progressBars[i]) {
+                            progressBars[i].style.width = '100%';
+                        }
+                    } catch (error) {
+                        console.error('File upload error:', error);
+                        uploadResults.push({
+                            filename: file.name,
+                            error: error.message,
+                            success: false
+                        });
+                    }
+                }
+
+                // Save test metadata to database
+                const now = Date.now();
+                const uploadKey = 'test_' + now;
+                
+                const testMetadata = {
+                    testType: testType.value,
+                    testTypeDisplay: testType.options[testType.selectedIndex].text,
+                    testDate: testDate.value,
+                    testNotes: testNotes.value || '',
+                    files: uploadResults,
+                    uploadedBy: (window.adminDisplayName || 'Admin'),
+                    uploadDate: new Date().toISOString(),
+                    uploadTimestamp: now,
+                    studentId: selectedStudent.id,
+                    studentName: selectedStudent.firstName,
+                    studentCourse: selectedStudent.course,
+                    studentYear: selectedStudent.year
+                };
+
+                // Save to psych_tests path
+                await set(ref(db, `psych_tests/${selectedStudent.id}/${uploadKey}`), testMetadata);
+                
+                // Also save to test_records for global tracking
+                await set(ref(db, `test_records/${uploadKey}`), {
+                    ...testMetadata,
+                    studentId: selectedStudent.id
+                });
+
+                // Update student's test statistics
+                await updateStudentTestStats(selectedStudent.id, testDate.value);
+                
+                showAlertModal(`Test results for ${selectedStudent.firstName} uploaded successfully!`,'Upload successful');
+                
+                // Close modals and reset
+                try { /* Notifications suppressed on this page: test results uploaded */ } catch(e) { }
+                closeModals();
+                resetUploadForm();
+                // Log activity locally so dashboard picks it up
+                try { pushLocalActivity(`Uploaded test results for ${selectedStudent.firstName}`, '📤'); } catch(e){ console.debug(e); }
+                
+            } catch (err) {
+                console.error('Upload error', err);
+                showAlertModal('Upload failed: ' + (err && err.message ? err.message : String(err)),'Upload failed');
+            } finally {
+                if (uploadConfirmBtn) { 
+                    uploadConfirmBtn.disabled = false; 
+                    uploadConfirmBtn.innerHTML = 'Confirm Upload'; 
+                }
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="material-icons text-sm">cloud_upload</i> Upload Results';
+                if (uploadConfirmModal) { 
+                    uploadConfirmModal.style.display = 'none'; 
+                    uploadConfirmModal.setAttribute('aria-hidden','true'); 
+                }
+            }
+        }
+
+        // Update student test statistics
+        async function updateStudentTestStats(studentId, fallbackTestDate) {
+            try {
+                // Read test records for the student and compute a robust count and latest test date
+                const testsRef = ref(db, `psych_tests/${studentId}`);
+                const snap = await get(testsRef);
+
+                let computedCount = 0;
+                let latestTestDate = fallbackTestDate || '';
+
+                if (snap.exists()) {
+                    const testsData = snap.val() || {};
+                    const entries = Object.values(testsData).filter(v => v !== null && v !== undefined && !(typeof v === 'object' && Object.keys(v).length === 0));
+                    computedCount = entries.length;
+
+                    // Determine latest testDate (prefer explicit testDate, otherwise uploadTimestamp)
+                    const dates = entries.map(e => e.testDate || e.uploadTimestamp).filter(Boolean).map(d => new Date(d).getTime()).filter(n => !Number.isNaN(n));
+                    if (dates.length > 0) {
+                        const max = Math.max(...dates);
+                        latestTestDate = new Date(max).toISOString().split('T')[0];
+                    }
+                } else {
+                    computedCount = 0;
+                }
+
+                // Merge with existing student record (if any) to preserve other fields
+                const studentRef = ref(db, `students/${studentId}`);
+                const studentSnap = await get(studentRef);
+                const studentData = studentSnap.exists() ? studentSnap.val() : {};
+
+                await set(ref(db, `students/${studentId}`), {
+                    ...studentData,
+                    lastTestDate: latestTestDate || studentData.lastTestDate || '',
+                    testsUploaded: computedCount,
+                    lastUpdated: Date.now()
+                });
+
+            } catch (error) {
+                console.error('Error updating student stats:', error);
+                // Don't throw - upload/delete should still complete even if stats update fails
+            }
+        }
+
+        // Reset upload form
+        function resetUploadForm() {
+            testType.value = '';
+            testDate.value = new Date().toISOString().split('T')[0];
+            testNotes.value = '';
+            selectedFiles = [];
+            fileItems.innerHTML = '';
+            fileList.classList.add('hidden');
+            uploadBtn.disabled = true;
+        }
+
+        // Upload button click handler - show confirmation modal
+        uploadBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (uploadBtn.disabled) return;
+            if (!selectedStudent) { showAlertModal('No student selected','Upload'); return; }
+            
+            // Populate confirm modal file list
+            confirmFileList.innerHTML = '';
+            selectedFiles.forEach((file) => {
+                const entry = document.createElement('div');
+                entry.className = 'file-item bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-between mb-2';
+                const left = document.createElement('div');
+                left.className = 'flex items-center gap-3';
+                
+                const fileIcon = document.createElement('i');
+                fileIcon.className = 'material-icons file-icon';
+                const ext = (file.name.split('.').pop() || '').toLowerCase();
+                let iconName = 'description';
+                if (ext === 'pdf') iconName = 'picture_as_pdf';
+                else if (['doc', 'docx'].includes(ext)) iconName = 'article';
+                else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) iconName = 'image';
+                fileIcon.textContent = iconName;
+                
+                const meta = document.createElement('div');
+                meta.innerHTML = `<div class="text-sm font-medium text-gray-800">${file.name}</div><div class="text-xs text-gray-500">${formatFileSize(file.size)}</div>`;
+                
+                left.appendChild(fileIcon);
+                left.appendChild(meta);
+                entry.appendChild(left);
+                confirmFileList.appendChild(entry);
+            });
+            
+            // Show modal
+            if (uploadConfirmModal) { 
+                // Preparing/upload confirmation is an intermediate UI step; do not log to Recent Activity.
+                uploadConfirmModal.style.display = 'flex'; 
+                uploadConfirmModal.setAttribute('aria-hidden','false'); 
+            }
+        });
+
+        // Confirm upload button
+        if (uploadConfirmBtn) {
+            uploadConfirmBtn.addEventListener('click', performConfirmedUpload);
+        }
+
+        // Cancel and close handlers
+        if (uploadConfirmCancel) {
+            uploadConfirmCancel.addEventListener('click', function(){ 
+                if (uploadConfirmModal) { 
+                    uploadConfirmModal.style.display='none'; 
+                    uploadConfirmModal.setAttribute('aria-hidden','true'); 
+                } 
+            });
+        }
+
+        if (uploadConfirmClose) {
+            uploadConfirmClose.addEventListener('click', function(){ 
+                if (uploadConfirmModal) { 
+                    uploadConfirmModal.style.display='none'; 
+                    uploadConfirmModal.setAttribute('aria-hidden','true'); 
+                } 
+            });
+        }
+
+        // Close modals
+        function closeModals() {
+            uploadModal.classList.remove('active');
+            viewModal.classList.remove('active');
+            selectedStudent = null;
+        }
+
+        // Cancel upload buttons
+        document.querySelectorAll('.cancel-upload').forEach(btn => {
+            btn.addEventListener('click', closeModals);
+        });
+        
+        // Close modals
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', closeModals);
+        });
+
+        // Upload new test from view modal
+        uploadNewBtn.addEventListener('click', function() {
+            closeModals();
+            if (selectedStudent) {
+                openUploadModal(selectedStudent.id);
+            }
+        });
+
+        // Filter students
+        function filterStudents() {
+            const searchTerm = (searchStudents.value || '').toLowerCase();
+            const campusValue = campusFilter ? campusFilter.value : '';
+            const collegeValue = collegeFilter ? collegeFilter.value : '';
+            const courseValue = courseFilter ? courseFilter.value : '';
+            const yearValue = yearFilter ? yearFilter.value : '';
+
+            const filteredStudents = students.filter(student => {
+                const name = (student.firstName || student.fullName || '').toString().toLowerCase();
+                const sid = (student.studentId || '').toString().toLowerCase();
+                const matchesSearch = !searchTerm || name.includes(searchTerm) || sid.includes(searchTerm);
+                const matchesCampus = !campusValue || (student.campus || '').toString() === campusValue;
+                const matchesCollege = !collegeValue || (student.college || '').toString() === collegeValue;
+                const matchesCourse = !courseValue || (student.course || '').toString() === courseValue;
+                const matchesYear = !yearValue || (student.year || '').toString() === yearValue;
+
+                return matchesSearch && matchesCampus && matchesCollege && matchesCourse && matchesYear;
+            });
+
+            currentPage = 1;
+            populateStudentsTable(filteredStudents);
+        }
+        
+    // Event listeners for filters
+    searchStudents.addEventListener('input', filterStudents);
+    campusFilter && campusFilter.addEventListener('change', function() { populateCollegeOptions(campusFilter.value); filterStudents(); });
+    collegeFilter && collegeFilter.addEventListener('change', function() { populateCourseOptions(collegeFilter.value); filterStudents(); });
+    courseFilter && courseFilter.addEventListener('change', filterStudents);
+    yearFilter && yearFilter.addEventListener('change', filterStudents);
+        
+        // Set default date to today
+        testDate.value = new Date().toISOString().split('T')[0];
+        
+        // Load students on page load — show skeleton while loading
+        showStudentsSkeleton(6);
+        loadStudentsFromDb();
+
+        // Attach realtime listeners so uploads/deletes update the UI immediately
+        attachRealtimeListeners();
+
+        // Attach realtime listeners for psych_tests changes
+        function attachRealtimeListeners() {
+            try {
+                const psychRef = ref(db, 'psych_tests');
+
+                // When a student's tests are added/changed/removed, recompute their stats and refresh that student in the UI
+                onChildAdded(psychRef, async (snap) => {
+                    const studentId = snap.key;
+                    if (!studentId) return;
+                    try { await updateStudentTestStats(studentId); await refreshLocalStudent(studentId); } catch (e) { console.warn('onChildAdded handler error', e); }
+                });
+
+                onChildChanged(psychRef, async (snap) => {
+                    const studentId = snap.key;
+                    if (!studentId) return;
+                    try { await updateStudentTestStats(studentId); await refreshLocalStudent(studentId); } catch (e) { console.warn('onChildChanged handler error', e); }
+                });
+
+                onChildRemoved(psychRef, async (snap) => {
+                    const studentId = snap.key;
+                    if (!studentId) return;
+                    try {
+                        // When all tests for a student are removed, update stats and remove/refresh entry
+                        await updateStudentTestStats(studentId);
+                        await refreshLocalStudent(studentId);
+                    } catch (e) { console.warn('onChildRemoved handler error', e); }
+                });
+            } catch (err) {
+                console.warn('Failed to attach realtime listeners for psych_tests', err);
+            }
+        }
+
+        // Refresh a single student's local record in the students array and update the table
+        async function refreshLocalStudent(studentId) {
+            try {
+                const studentSnap = await get(ref(db, `students/${studentId}`));
+                if (studentSnap.exists()) {
+                    const rec = studentSnap.val();
+                    const mapped = mapStudentRecord(studentId, rec);
+                    const idx = students.findIndex(s => s.id === studentId);
+                    if (idx !== -1) {
+                        students[idx] = mapped;
+                    } else {
+                        students.push(mapped);
+                    }
+                } else {
+                    // student record removed - drop from local list
+                    students = students.filter(s => s.id !== studentId);
+                }
+                populateStudentsTable();
+            } catch (e) {
+                console.warn('refreshLocalStudent error', e);
+            }
+        }
+
+        // Static lists and mappings (as requested)
+        const STATIC_CAMPUSES = [
+            'Main Campus',
+            'Cajidiocan Campus',
+            'San Fernando Campus',
+            'Romblon Campus',
+            'San Agustin Campus',
+            'Sta. Maria Campus',
+            'Sta. Fe Campus',
+            'Calatrava Campus'
+        ];
+
+        const STATIC_COLLEGES_BY_CAMPUS = {
+            'Main Campus': [
+                'College of Education',
+                'College of Business and Accountancy',
+                'College of Arts and Sciences',
+                'College of Engineering and Technology',
+                'College of Computing, Multimedia Arts and Digital Innovation'
+            ]
+            // other campuses can be added here if you provide mappings
+        };
+
+        const STATIC_COURSES_BY_COLLEGE = {
+            'College of Business and Accountancy': ['BSBA OM', 'BSBA FM', 'BSA', 'BSHM'],
+            'College of Computing, Multimedia Arts and Digital Innovation': ['BSIT', 'BMMA'],
+            'College of Engineering and Technology': ['BSEE', 'BSCE', 'BSABE', 'BSME'],
+            'College of Arts and Sciences': ['BS Biology', 'BSABE']
+            // College of Education or others can be extended
+        };
+
+        function fillSelectWithArray(selectEl, arr, allLabel) {
+            if (!selectEl) return;
+            const prev = selectEl.value || '';
+            selectEl.innerHTML = '';
+            const optAll = document.createElement('option');
+            optAll.value = '';
+            optAll.textContent = allLabel || 'All';
+            selectEl.appendChild(optAll);
+            arr.forEach(v => {
+                if (v === '' || v === null || v === undefined) return;
+                const o = document.createElement('option');
+                o.value = v;
+                o.textContent = v;
+                selectEl.appendChild(o);
+            });
+            if (prev) selectEl.value = prev;
+        }
+
+        // Populate filter options from static lists and students fallback
+        function populateFilterOptions() {
+            // Campus: use static list
+            fillSelectWithArray(campusFilter, STATIC_CAMPUSES, 'All Campuses');
+
+            // Colleges: if a campus is already selected, populate specific colleges; otherwise
+            // if students contain college values, include those as well.
+            const selectedCampus = campusFilter.value;
+            populateCollegeOptions(selectedCampus);
+
+            // Courses: populate based on currently selected college or fallback to student-derived list
+            const selectedCollege = collegeFilter.value;
+            populateCourseOptions(selectedCollege);
+        }
+
+        function populateCollegeOptions(selectedCampus) {
+            let collegesToShow = [];
+            if (selectedCampus && STATIC_COLLEGES_BY_CAMPUS[selectedCampus]) {
+                collegesToShow = STATIC_COLLEGES_BY_CAMPUS[selectedCampus].slice();
+            } else {
+                // fallback: union of all static colleges + colleges found in student data
+                const set = new Set();
+                Object.values(STATIC_COLLEGES_BY_CAMPUS).flat().forEach(c => set.add(c));
+                students.forEach(s => { if (s.college) set.add(s.college); });
+                collegesToShow = Array.from(set).sort();
+            }
+            fillSelectWithArray(collegeFilter, collegesToShow, 'All Colleges');
+            // If parent (campus) was set to All (empty value), ensure college is reset to All too
+            if (!selectedCampus && collegeFilter) {
+                collegeFilter.value = '';
+            }
+            // after repopulating colleges, update courses
+            populateCourseOptions(collegeFilter.value);
+        }
+
+        function populateCourseOptions(selectedCollege) {
+            // Build a union of all known courses (static mappings + student-derived)
+            const allCoursesSet = new Set();
+
+            // Add static courses from mapping
+            Object.values(STATIC_COURSES_BY_COLLEGE).forEach(arr => {
+                if (Array.isArray(arr)) arr.forEach(c => c && allCoursesSet.add(c));
+            });
+
+            // Add student-derived courses
+            students.forEach(s => { if (s.course) allCoursesSet.add(s.course); });
+
+            // If a specific college is selected and we have static courses for it, ensure those are included
+            if (selectedCollege && STATIC_COURSES_BY_COLLEGE[selectedCollege]) {
+                STATIC_COURSES_BY_COLLEGE[selectedCollege].forEach(c => c && allCoursesSet.add(c));
+            }
+
+            const allCourses = Array.from(allCoursesSet).sort();
+            fillSelectWithArray(courseFilter, allCourses, 'All Courses');
+
+            // If parent (college) was set to All (empty value), ensure course is reset to All too
+            if (!selectedCollege && courseFilter) {
+                courseFilter.value = '';
+            }
+        }
+
+        // call populate after students loaded in loadStudentsFromDb (we also call it there)
+
+        // VIEW MODAL FUNCTIONALITY (load real data from database)
+        async function openViewModal(studentId) {
+            selectedStudent = students.find(s => s.id === studentId);
+            
+            if (selectedStudent) {
+                // Populate student info
+                viewStudentInfo.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-800 font-medium text-lg">${selectedStudent.initials}</div>
+                        <div class="ml-4">
+                            <div class="text-md font-medium text-gray-900">${selectedStudent.firstName}</div>
+                            <div class="text-sm text-gray-500">${selectedStudent.course} - ${selectedStudent.year}${getOrdinalSuffix(selectedStudent.year)} Year</div>
+                            <div class="text-xs text-gray-400 mt-1">ID: ${selectedStudent.studentId}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Load test results from database
+                await loadTestResultsFromDb(studentId);
+                
+                // Show modal
+                viewModal.classList.add('active');
+                try { pushLocalActivity(`Viewed test results for ${selectedStudent.firstName}`, '👁️'); } catch(e){ console.debug(e); }
+            }
+        }
+
+        // Load test results from Firebase
+        async function loadTestResultsFromDb(studentId) {
+            try {
+                const testsRef = ref(db, `psych_tests/${studentId}`);
+                const snapshot = await get(testsRef);
+                
+                testResultsList.innerHTML = '';
+                noResultsMessage.classList.add('hidden');
+                
+                if (snapshot.exists()) {
+                    const testsData = snapshot.val();
+                    const testResults = [];
+                    
+                    // Convert object to array and sort by date (newest first)
+                    for (const [testId, testData] of Object.entries(testsData)) {
+                        testResults.push({
+                            id: testId,
+                            ...testData
+                        });
+                    }
+                    
+                    testResults.sort((a, b) => new Date(b.uploadTimestamp) - new Date(a.uploadTimestamp));
+                    
+                    if (testResults.length > 0) {
+                        noResultsMessage.classList.add('hidden');
+                        
+                        testResults.forEach(result => {
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'test-result-item';
+                            
+                            const displayDate = new Date(result.testDate).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+                            
+                            const uploadDate = new Date(result.uploadTimestamp).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
+                            
+                            resultItem.innerHTML = `
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">${result.testTypeDisplay || result.testType}</h4>
+                                        <p class="text-sm text-gray-500">Test Date: ${displayDate}</p>
+                                    </div>
+                                    <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Completed</span>
+                                </div>
+                                ${result.testNotes ? `<p class="text-sm text-gray-600 mb-2">${result.testNotes}</p>` : ''}
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center gap-2">
+                                        <i class="material-icons text-gray-500 text-sm">description</i>
+                                        <span class="text-sm text-gray-600">${result.files ? result.files.length : 0} file(s)</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="text-blue-600 hover:text-blue-800 text-sm download-btn" data-test-id="${result.id}">
+                                            <i class="material-icons text-sm">download</i> Download
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-800 text-sm delete-btn" data-test-id="${result.id}">
+                                            <i class="material-icons text-sm">delete</i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-400 mt-2">
+                                    Uploaded by ${result.uploadedBy} on ${uploadDate}
+                                </div>
+                            `;
+                            testResultsList.appendChild(resultItem);
+                        });
+
+                        // Add event listeners for download and delete buttons
+                        document.querySelectorAll('.download-btn').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const testId = this.getAttribute('data-test-id');
+                                downloadTestResult(testId);
+                            });
+                        });
+
+                        document.querySelectorAll('.delete-btn').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const testId = this.getAttribute('data-test-id');
+                                deleteTestResult(testId);
+                            });
+                        });
+                    } else {
+                        noResultsMessage.classList.remove('hidden');
+                    }
+                } else {
+                    noResultsMessage.classList.remove('hidden');
+                }
+                
+            } catch (error) {
+                console.error('Error loading test results:', error);
+                showAlertModal('Error loading test results','Error');
+                noResultsMessage.classList.remove('hidden');
+            }
+        }
+
+        // Download test result
+        async function downloadTestResult(testId) {
+            try {
+                const testRef = ref(db, `psych_tests/${selectedStudent.id}/${testId}`);
+                const snapshot = await get(testRef);
+                
+                if (snapshot.exists()) {
+                    const testData = snapshot.val();
+                    
+                    if (testData.files && testData.files.length > 0) {
+                        // Download the first file (you can modify this to handle multiple files)
+                        const file = testData.files[0];
+                        if (file.data) {
+                            const dataUrl = `data:${file.mimeType};base64,${file.data}`;
+                            const a = document.createElement('a');
+                            a.href = dataUrl;
+                            a.download = file.filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            // Downloads are not recorded in Recent Activity to reduce noise.
+                            try { /* suppressed download activity logging */ } catch(e){}
+                        } else {
+                            showAlertModal('File data not available for download','Download');
+                        }
+                    } else {
+                        showAlertModal('No files found for this test','Download');
+                    }
+                }
+            } catch (error) {
+                console.error('Error downloading test result:', error);
+                showAlertModal('Error downloading file','Download');
+            }
+        }
+
+        // Delete test result
+        async function deleteTestResult(testId) {
+            if (confirm('Are you sure you want to delete this test result? This action cannot be undone.')) {
+                try {
+                    // Delete from psych_tests path
+                    await remove(ref(db, `psych_tests/${selectedStudent.id}/${testId}`));
+                    
+                    // Delete from test_records path
+                    await remove(ref(db, `test_records/${testId}`));
+                    
+                    // Recompute and update student stats so the testsUploaded count stays accurate
+                    try {
+                        await updateStudentTestStats(selectedStudent.id);
+                    } catch (e) {
+                        console.warn('Failed to update student stats after delete', e);
+                    }
+
+                    showAlertModal('Test result deleted successfully!','Delete');
+
+                    // Refresh the view and reload students list to reflect updated counts
+                    await loadTestResultsFromDb(selectedStudent.id);
+                    try { await loadStudentsFromDb(); } catch(e){ /* non-fatal */ }
+                    try { /* Notifications suppressed on this page: test result deleted */ } catch(e) { }
+                    // Deletions are not recorded in Recent Activity on this page per policy to reduce noise.
+                    
+                } catch (error) {
+                    console.error('Error deleting test result:', error);
+                    showAlertModal('Error deleting test result','Delete');
+                }
+            }
+        }
+    });
+    </script>
+</body>
+</html>

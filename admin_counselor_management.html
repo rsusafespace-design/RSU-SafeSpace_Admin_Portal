@@ -1,0 +1,2801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Portal - Counselor Management</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+      // Prevent browser caching of this page
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.href);
+      }
+      window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+          window.location.reload();
+        }
+      });
+    </script>
+    <script>
+      (function() {
+        emailjs.init("En395SjR7Jg57-J8u"); // Replace with your EmailJS Public Key
+      })();
+    </script>
+    <script>
+      // Profile dropdown + notifications wiring (shared behavior)
+      (function topRightInteractions(){
+        const notifBtn = document.getElementById('notifBtn');
+        const notifPanel = document.getElementById('notifPanel');
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const accountEdit = document.getElementById('accountEdit');
+        const accountSettings = document.getElementById('accountSettings');
+        const accountLogout = document.getElementById('accountLogout');
+
+        function closeAll() {
+          if (notifPanel) { notifPanel.setAttribute('data-open','false'); notifBtn && notifBtn.setAttribute('aria-expanded','false'); }
+          if (profileDropdown) { profileDropdown.setAttribute('aria-hidden','true'); profileBtn && profileBtn.setAttribute('aria-expanded','false'); }
+        }
+
+        notifBtn?.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const open = notifPanel?.getAttribute('data-open') === 'true';
+          closeAll();
+          if (!open && notifPanel) { notifPanel.setAttribute('data-open','true'); notifBtn.setAttribute('aria-expanded','true'); }
+        });
+
+        profileBtn?.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const open = profileDropdown?.getAttribute('aria-hidden') === 'false';
+          closeAll();
+          if (!open && profileDropdown) { profileDropdown.setAttribute('aria-hidden','false'); profileBtn.setAttribute('aria-expanded','true'); }
+        });
+
+        document.addEventListener('click', (ev) => {
+          try {
+            const t = ev.target;
+            if (t && typeof t.closest === 'function') {
+              if (!t.closest('#notifPanel') && !t.closest('#notifBtn') && !t.closest('#profileDropdown') && !t.closest('#profileBtn')) {
+                closeAll();
+              }
+            } else {
+              const path = (typeof ev.composedPath === 'function') ? ev.composedPath() : (function(){ let p=[]; let n=ev.target; while(n){ p.push(n); n = n.parentNode; } return p; })();
+              const ids = path.map(el => el && el.id).filter(Boolean);
+              if (!ids.includes('notifPanel') && !ids.includes('notifBtn') && !ids.includes('profileDropdown') && !ids.includes('profileBtn')) {
+                closeAll();
+              }
+            }
+          } catch(e) { try { closeAll(); } catch(_){} }
+        }, { capture: true });
+
+        document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeAll(); });
+
+        accountEdit?.addEventListener('click', () => { closeAll(); try { const editBtn = document.getElementById('openAddModal') || document.getElementById('editProfileBtn'); if(editBtn) editBtn.click(); } catch(e){ console.warn(e); } });
+        accountSettings?.addEventListener('click', () => { closeAll(); window.location.href = 'admin_settings.html'; });
+        accountLogout?.addEventListener('click', () => { closeAll(); try { localStorage.removeItem('authToken'); } catch(e){} window.location.href = 'login.html'; });
+
+        // Populate avatar/greeting/email if profile object is available on window
+        try {
+          const topAvatar = document.querySelector('.main-top-bar .user-avatar') || document.getElementById('profileBtn');
+          const dropdownAvatar = document.querySelector('.avatar-large') || null;
+          const emailEl = document.getElementById('profileEmail');
+          const greetEl = document.getElementById('topGreetingName');
+          const displayName = (window.adminProfile && (window.adminProfile.displayName || window.adminProfile.name)) || window.adminDisplayName || '';
+          if (window.adminProfile) {
+            const p = window.adminProfile;
+            if (topAvatar) {
+              if (p.profileImage) {
+                let img = topAvatar.querySelector('img');
+                if (!img) { img = document.createElement('img'); img.style.width = '100%'; img.style.height = '100%'; img.style.borderRadius = '50%'; img.style.objectFit = 'cover'; topAvatar.textContent = ''; topAvatar.appendChild(img); }
+                img.src = p.profileImage;
+                img.alt = displayName || 'Avatar';
+              } else if (displayName) {
+                topAvatar.textContent = displayName.trim().charAt(0).toUpperCase();
+              }
+            }
+            if (dropdownAvatar) {
+              if (p.profileImage) {
+                let img = dropdownAvatar.querySelector('img');
+                if (!img) { img = document.createElement('img'); dropdownAvatar.appendChild(img); }
+                img.src = p.profileImage; img.alt = displayName || 'Avatar';
+              } else if (displayName) {
+                dropdownAvatar.textContent = (displayName||'A').trim().charAt(0).toUpperCase();
+              }
+            }
+            if (emailEl) emailEl.textContent = p.email || emailEl.textContent;
+            if (greetEl && displayName) greetEl.textContent = greetEl.textContent.replace(/,.*/,'') + `, ${displayName}`;
+          }
+        } catch(e){ console.debug('populateAvatarIfReady error', e); }
+      })();
+    </script>
+    
+  <style>
+    /* BASE STYLES */
+    /* make box-sizing predictable and prevent horizontal scroll */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { overflow-x: hidden; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f7fa;
+      color: #333;
+    }
+
+    .container {
+        display: flex;
+        min-height: 100vh;
+    }
+    
+    /* HEADER & TOP BAR STYLES (Copied from appointment.html) */
+    .header-and-sidebar-top {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        display: flex;
+        background-color: #1e8e3e;
+        color: white;
+        height: 60px;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar-top {
+        width: 250px;
+        display: flex;
+        align-items: center;
+        padding: 10px 20px;
+        box-sizing: border-box;
+        border-right: 1px solid rgba(255, 255, 255, 0.3);
+        height: 60px;
+        transition: width 0.3s ease;
+    }
+    
+    .sidebar-top.collapsed {
+        width: 80px;
+        justify-content: center;
+    }
+    
+    .sidebar-top.collapsed .sidebar-logo {
+        opacity: 0;
+        pointer-events: none;
+        width: 0;
+    }
+    
+    .sidebar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: opacity 0.3s ease, width 0.3s ease;
+    }
+
+    .sidebar-logo img {
+        height: 40px;
+    }
+
+    .sidebar-logo span {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: white;
+        white-space: nowrap;
+    }
+    
+    .menu-icon {
+        cursor: pointer;
+        font-size: 24px;
+        margin-left: auto;
+        transition: all 0.3s ease;
+        padding: 8px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        min-height: 40px;
+    }
+    
+    .menu-icon:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+    }
+    
+    .menu-icon:active {
+        transform: scale(0.95);
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .main-top-bar {
+        flex-grow: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 30px; 
+    }
+
+    .main-top-bar .portal-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .main-top-bar .user-info {
+        display: flex;
+        align-items: center;
+        color: white;
+    }
+
+    .main-top-bar .user-info .material-icons {
+        margin-right: 10px;
+        font-size: 24px;
+    }
+
+    .main-top-bar .user-avatar {
+        width: 40px;
+        height: 40px;
+        background-color: white;
+        color: #1e8e3e; 
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        margin-left: 10px;
+        font-size: 18px;
+    }
+    
+    /* SIDEBAR STYLES (Copied from appointment.html) */
+    .sidebar {
+        width: 250px;
+        background: #f0f3f6;
+        border-right: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        height: calc(100vh - 60px);
+        z-index: 999;
+        overflow: auto;
+        transition: width 0.3s ease, transform 0.3s ease;
+    }
+    
+    .nav-menu .nav {
+        list-style: none;
+        padding: 12px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .nav-item {
+        color: #1f2937;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 10px;
+        border-radius: 8px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 400;
+        font-size: 15px;
+        transition: background 0.2s, color 0.2s;
+        text-align: left;
+        width: 100%;
+    }
+    
+    .nav-item:hover {
+        background: rgba(15,122,52,0.08) !important;
+        color: #0f7a34 !important;
+        font-weight: 400 !important;
+        border-radius: 8px !important;
+    }
+    
+    .nav-item.active {
+        background: rgba(15,122,52,0.12) !important;
+        color: #0f7a34 !important;
+        font-weight: 600 !important;
+    }
+    
+    .nav-item:hover .icon,
+    .nav-item.active .icon {
+        color: #1f2937 !important;
+    }
+
+    .nav-item .icon {
+        width: 28px;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        line-height: 1;
+        color: #1f2937;
+        transition: color 0.2s;
+    }
+    
+    .nav-item .label {
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        opacity: 1;
+        transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .sidebar.collapsed {
+        width: 80px;
+    }
+    
+    .sidebar.collapsed .nav-item .label {
+        display: none;
+    }
+    
+    .sidebar.collapsed .nav-item .icon {
+        width: 56px;
+        font-size: 26px;
+        justify-content: center;
+    }
+    
+    .sidebar.collapsed .nav-item {
+        justify-content: center;
+        padding: 12px 6px;
+        gap: 0;
+    }
+    
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+    }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      transform: translateX(-100%);
+      width: 280px;
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+    .sidebar.mobile-open {
+      transform: translateX(0);
+    }
+    .sidebar.collapsed {
+      width: 280px;
+      transform: translateX(-100%);
+    }
+    /* On small screens keep main content full-width and positioned from left:0 */
+    .main-content {
+      left: 0 !important;
+      padding: 20px 15px;
+    }
+    .card-container {
+      padding: 20px 15px !important;
+    }
+  }
+
+  /* Ensure the page and container can stretch to full viewport height */
+  html, body { height: 100%; }
+  .container { min-height: 100vh; }
+
+  /* MAIN CONTENT STYLES - make the visible page fixed under header/sidebar */
+  .main-content {
+    position: fixed;
+    top: 60px; /* height of header */
+    left: 250px; /* space for sidebar */
+    right: 0;
+    bottom: 0;
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    overflow: auto; /* internal scrolling */
+    transition: left 0.3s ease;
+    min-height: auto;
+    background: transparent;
+  }
+
+  .main-content.shifted {
+    left: 80px; /* when sidebar collapses */
+  }
+        
+    /* PAGE-SPECIFIC STYLES */
+    .card-container {
+        padding: 30px;
+        flex-grow: 1;
+    }
+  .card {
+    background: #fff;
+    /* allow the card to flex within the container so the table area can size itself
+       and be the only scrollable region. min-height:0 is important for flex children */
+    flex: 1 1 auto;
+    min-height: 800px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    padding: 24px;
+    margin: 0 auto;
+  }
+    .card-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .search-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .search-row input[type="text"] {
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1.5px solid #ddd;
+        font-size: 16px;
+        width: 640px;
+        max-width: 100%;
+        outline: none;
+        transition: border 0.2s;
+    }
+    .search-row input[type="text"]:focus {
+        border: 1.5px solid #11824b;
+    }
+  .add-counselor-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(180deg,#10b981,#059669);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+    transition: transform .08s ease, box-shadow .12s ease, opacity .12s;
+  }
+  .add-counselor-btn i { font-size: 16px; }
+  .add-counselor-btn:hover { transform: translateY(-2px); opacity: 0.98; box-shadow: 0 10px 32px rgba(6,95,70,0.12); }
+  .table-container {
+    /* allow the table area to grow and scroll inside the card */
+    flex: 1 1 auto;
+    min-height: 0; /* allow flex children to shrink properly */
+    overflow-y: auto;
+  }
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+        background: #fff;
+    }
+  .user-table thead {
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .user-table th,
+  .user-table td {
+    padding: 13px 8px;
+    text-align: left;
+    /* allow wrapping to avoid horizontal scroll */
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+    /* remove per-cell border so we can render a single continuous row border */
+    border-bottom: none;
+  }
+  .user-table tbody tr {
+    border-bottom: 1px solid #eee;
+  }
+    .user-table tbody tr:hover {
+        background: #d9f5e8;
+        cursor: pointer;
+        transition: background-color 160ms linear;
+    }
+    .user-table tbody tr.selected {
+        background: #bbf7d0;
+        transition: background-color 160ms linear;
+    }
+    .user-table td { overflow: hidden; text-overflow: ellipsis; }
+        .status-enable {
+            background: #d6f5e6;
+            color: #11824b;
+            border-radius: 8px;
+            padding: 5px 16px;
+            font-size: 15px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .status-disable {
+            background: #fff7c2;
+            color: #b59d00;
+            border-radius: 8px;
+            padding: 5px 16px;
+            font-size: 15px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .action-icons {
+      display: flex;
+      gap: 10px;
+      align-items: center; /* ensure icons are vertically centered in the cell */
+        }
+    .action-icons i {
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.2s;
+      margin-top: 0 !important; /* override inline margin-top to keep vertical alignment */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+        .action-icons .view { color: #2563eb; }
+        .action-icons .edit { color: #4caf50; }
+        .action-icons .delete { color: #f44336; }
+    /* Avatar styles */
+    .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display:block; }
+    .avatar-fallback { width:40px; height:40px; border-radius:50%; background:#e2e8f0; color:#334155; display:flex; align-items:center; justify-content:center; font-weight:700; }
+    .photo-input { display:flex; align-items:center; gap:10px; }
+    .photo-input img { width:64px; height:64px; border-radius:50%; object-fit:cover; border:1px solid #e5e7eb; }
+            .photo-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        /* Confirmation Modal Styles */
+        .confirm-modal .modal-content {
+            max-width: 400px;
+            text-align: left;
+            padding: 24px;
+        }
+        .confirm-modal .modal-header {
+            color: #374151;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .confirm-modal .confirm-message {
+            font-size: 14px;
+            color: #6b7280;
+            margin: 0 0 24px 0;
+            line-height: 1.4;
+        }
+        .confirm-modal .confirm-details {
+            display: none;
+        }
+        .confirm-modal .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 0;
+        }
+        .confirm-modal .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 60px;
+        }
+        .btn-no {
+            background-color: #6b7280;
+            color: white;
+            border: none;
+        }
+        .btn-no:hover {
+            background-color: #4b5563;
+        }
+        .btn-yes {
+            background-color: #059669;
+            color: white;
+            border: none;
+        }
+        .btn-yes:hover {
+            background-color: #047857;
+        }
+        .btn-danger {
+            background-color: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+        .btn-success {
+            background-color: #059669;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #047857;
+        }
+        /* Wide modal for add counselor */
+        .modal-content.wide {
+            max-width: 900px;
+        }
+        /* Updated form grid for new layout */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .col-span-2 {
+            grid-column: span 2;
+        }
+        /* Updated form styling */
+        .form-grid label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .form-grid input,
+        .form-grid select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background-color: #ffffff;
+            box-sizing: border-box;
+        }
+        .form-grid input:focus,
+        .form-grid select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        .form-grid select {
+            cursor: pointer;
+        }
+        .form-grid input:disabled,
+        .form-grid select:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .form-field input:disabled,
+        .form-field select:disabled {
+            background-color: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .req {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+        .notice {
+            grid-column: span 2;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .notice.error {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .notice.success {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+        /* Photo section styling */
+        .photo-section {
+            margin-bottom: 24px;
+        }
+        .photo-label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .photo-upload-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            background-color: #f9fafb;
+            margin-bottom: 8px;
+        }
+        .photo-preview-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+        }
+        .file-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .file-input-label {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #374151;
+            transition: background-color 0.2s ease;
+        }
+        .file-input-label:hover {
+            background-color: #e5e7eb;
+        }
+        .file-status {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .photo-hint {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        /* Form field styling */
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-field label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .form-field input,
+        .form-field select {
+            padding: 12px 16px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background-color: #ffffff;
+        }
+        .form-field input:focus,
+        .form-field select:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+  /* Allow table to be responsive and wrap instead of forcing horizontal scroll */
+  .table-container { overflow-x: hidden; }
+  .user-table { table-layout: auto; width: 100%; min-width: 0; }
+        .user-table th.photo-col, .user-table td.photo-col { width: 64px; text-align: center; }
+        .avatar { margin: 0 auto; }
+        .avatar-fallback { display: inline-flex; margin: 0 auto; }
+        .modal-content.img-preview { max-width: 640px; width: 96%; }
+        .img-preview-box {
+            width: 440px; height: 440px;
+            max-width: 92vw; max-height: 78vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto;
+        }
+        #imgPreviewEl {
+            width: 100%; height: 100%;
+            object-fit: contain; display:block; border-radius: 8px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 480px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-cancel {
+            background-color: #cbd5e0;
+            color: #4a5568;
+        }
+        .btn-primary {
+            background-color: #1e8e3e;
+            color: white;
+        }
+        .cropper-container { max-width:100% !important; max-height:60vh !important; }
+        #cropImage { max-width:100%; max-height:60vh; width:100%; height:auto; display:block; }
+        .modal.large .modal-content { max-width: 720px; width: 96%; max-height: 90vh; overflow: auto; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 46px;
+          height: 26px;
+          vertical-align: middle;
+        }
+        .switch input { display: none; }
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-color: #ccc;
+          transition: .18s;
+          border-radius: 26px;
+        }
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 20px;
+          width: 20px;
+          left: 3px;
+          top: 3px;
+          background-color: white;
+          transition: .18s;
+          border-radius: 50%;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        .switch input:checked + .slider { background: #10b981; }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+        .login-label { font-size:12px; margin-left:8px; vertical-align:middle; color:#333; }
+        
+        .success-notification {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #065f46;
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideDown 0.3s ease-out;
+        }
+        .success-notification i.fa-check-circle {
+            color: #10b981;
+            font-size: 16px;
+        }
+        .success-notification .close-notification {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #065f46;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .success-notification .close-notification:hover {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px;
+        }
+        /* Footer button styling: keep icon visible, hide label when collapsed */
+        .sidebar-footer .nav-item { display:flex; align-items:center; gap:12px; padding:10px; border-radius:8px; }
+        .sidebar-footer .nav-item .label { transition: opacity 0.15s ease; }
+        .sidebar.collapsed .sidebar-footer .nav-item .label { display:none; }
+        /* Ensure footer stays above overlay and doesn't block menu icon */
+        .sidebar-footer { z-index: 1000; }
+
+    /* Profile dropdown styles (shared across pages) */
+    .profile-dropdown .profile-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 12px 34px rgba(2,6,23,0.12), 0 4px 10px rgba(2,6,23,0.06);
+      overflow: hidden;
+      animation: fadeIn .12s ease;
+      transition: transform .14s ease, box-shadow .14s ease, opacity .12s ease;
+      transform-origin: top right;
+    }
+    .profile-card-top { display:flex; justify-content:center; padding:14px 12px 6px; }
+    .avatar-large {
+      width: 120px; height:120px; border-radius:50%; background:#f3faf5; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:32px; position:relative; overflow:hidden; border:4px solid rgba(16,185,129,0.06);
+    }
+    .avatar-large img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .18s ease; box-shadow: 0 6px 18px rgba(2,6,23,0.08); }
+    .avatar-large:hover img { transform: scale(1.02); }
+    .avatar-camera { position:absolute; right:6px; bottom:6px; border-radius:50%; background:#fff; border:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 12px rgba(2,6,23,0.06); cursor:pointer; font-size:13px; }
+    .profile-card-body { padding: 10px 18px 16px; text-align:center; display:flex; flex-direction:column; gap:8px; }
+    .profile-email { font-size:13px; color:#6b7280; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .profile-greeting { font-weight:700; font-size:18px; margin-top:4px; color:#111827; }
+    .manage-btn { display:inline-block; width:100%; padding:10px 12px; border-radius:999px; border:1px solid rgba(16,185,129,0.12); background:#10b981; color:#fff; font-weight:700; box-shadow:none; cursor:pointer; }
+    .manage-btn:hover { transform:none; filter:brightness(.98); }
+    .profile-divider { height:1px; background:#f1f5f9; margin:8px 0; }
+    .profile-actions { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .profile-link { flex:1; text-align:left; border:0; background:transparent; padding:8px; color:#374151; font-weight:600; cursor:pointer; }
+    .signout-link { flex:1; text-align:right; border:0; background:transparent; padding:8px; color:#ef4444; font-weight:700; cursor:pointer; }
+    @media (max-width:420px) { .profile-dropdown { right:8px !important; left:8px !important; min-width:auto; } }
+    .profile-dropdown[aria-hidden="false"] .profile-card { transform: translateY(-6px); box-shadow: 0 20px 54px rgba(2,6,23,0.16), 0 6px 18px rgba(2,6,23,0.06); }
+
+  .icon-btn { background: transparent !important; border: 0 !important; outline: none !important; box-shadow: none !important; padding: 6px; display: inline-flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+  .icon-btn:focus, .icon-btn:active {
+    outline: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+    /* popover / dropdown visibility controlled by attributes */
+    .popover { display: none; }
+    .popover[data-open="true"] { display: block; }
+    .dropdown { display: none; }
+    .dropdown[aria-hidden="false"] { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Make sidebar logout text/icon red on hover/focus and keyboard focus
+       - add smooth transition, use :focus-visible for keyboard focus, and show pointer */
+    #sidebarLogoutBtn { cursor: pointer; }
+    #sidebarLogoutBtn .label, #sidebarLogoutBtn .icon {
+        color: inherit;
+        transition: color 160ms ease-in-out, transform 120ms ease;
+    }
+    /* Hover and focus (mouse) */
+    #sidebarLogoutBtn:hover .label,
+    #sidebarLogoutBtn:hover .icon {
+        color: #ef4444 !important; /* red text/icon on hover */
+    }
+    /* Keyboard focus visible for accessibility */
+    #sidebarLogoutBtn:focus-visible .label,
+    #sidebarLogoutBtn:focus-visible .icon {
+        color: #ef4444 !important; /* red text/icon on keyboard focus */
+    }
+    /* Modern table controls and pagination styling */
+    .table-controls{
+      background: #ffffff; /* keep light */
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(2,6,23,0.06);
+      border: 1px solid rgba(15,23,42,0.04);
+    }
+    .table-controls label{ color:#374151; font-weight:600; }
+    #entriesPerPage{ height:36px; padding:6px 8px; border-radius:8px; border:1px solid #e6eef0; background:#fff; min-width:72px; }
+    #searchInput{ height:38px; padding:8px 12px; border-radius:10px; border:1px solid #e6eef0; box-shadow:none; width:260px; transition: box-shadow .12s ease, border-color .12s ease; }
+    #searchInput:focus{ outline:none; border-color:#10b981; box-shadow:0 6px 18px rgba(16,185,129,0.08); }
+
+    /* table look */
+    .user-table thead th{ background: #f8fafb; color:#374151; font-weight:700; padding:12px 10px; border-bottom:1px solid #eef2f6; }
+    .user-table tbody td{ padding:12px 10px; color:#334155; }
+    .user-table tbody tr:nth-child(odd){ background: #fff; }
+    .user-table tbody tr:nth-child(even){ background: #fbfdfe; }
+
+    /* modern add button */
+    .add-counselor-btn{
+      background: linear-gradient(180deg,#10b981,#059669);
+      color:#fff; border:0; padding:8px 12px; border-radius:10px; font-weight:700; box-shadow: 0 8px 20px rgba(4,120,87,0.12);
+      display:inline-flex; gap:8px; align-items:center; cursor:pointer; transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    }
+    .add-counselor-btn:hover{ transform:translateY(-2px); box-shadow: 0 14px 30px rgba(4,120,87,0.10); }
+
+    /* footer / pagination */
+  .table-footer{ padding:6px 8px; }
+  .card-footer { margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f6; display: flex; justify-content: space-between; align-items: center; }
+    #entriesInfo{ font-size:13px; color:#6b7280; }
+    /* Small pill pagination buttons */
+    .pagination-controls { display:flex; gap:8px; align-items:center; }
+    #prevPage, #nextPage { width:36px; height:28px; padding:0; border-radius:8px; border:1px solid rgba(15,23,42,0.06); background:#fff; color:#374151; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+    #prevPage:disabled, #nextPage:disabled { opacity:0.5; cursor:default; box-shadow:none; }
+    #currentPage { display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; padding:4px 8px; border-radius:6px; border:2px solid #10b981; color:#10b981; font-weight:800; background:#fff; }
+
+    @media (max-width:720px){
+      .table-controls{ padding:10px; }
+      #searchInput{ width:160px; }
+      .user-table thead th, .user-table tbody td{ padding:10px 8px; }
+      #prevPage, #nextPage{ min-width:60px; padding:6px 8px; }
+    }
+    /* Loading skeleton styles (table row placeholders) */
+    .skeleton-line {
+      background: linear-gradient(90deg, #f3f4f6 25%, #edeff1 50%, #f3f4f6 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s linear infinite;
+      height: 12px;
+      border-radius: 6px;
+    }
+    .skeleton-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(90deg, #f3f4f6 25%, #edeff1 50%, #f3f4f6 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s linear infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    </style>
+</head>
+<body>
+  <!-- Reset Password Confirmation Modal -->
+  <div id="resetPasswordConfirmModal" class="modal" style="display:none;z-index:9999;">
+    <div class="modal-content" style="max-width:400px;margin:auto;">
+      <span id="resetPasswordConfirmClose" class="close" style="float:right;cursor:pointer;font-size:24px;">&times;</span>
+      <div id="resetPasswordConfirmMessage" style="margin:24px 0;"></div>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button id="resetPasswordConfirmYes" class="btn btn-primary">Yes, Reset</button>
+        <button id="resetPasswordConfirmNo" class="btn btn-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+    <div class="header-and-sidebar-top">
+      <aside class="sidebar-top" id="sidebarTop">
+        <div class="sidebar-logo">
+          <img src="safespace.png" alt="SafeSpace Logo">
+          <span>SafeSpace</span>
+        </div>
+        <i class="material-icons menu-icon" id="menuIcon">menu</i>
+      </aside>
+      <header class="main-top-bar">
+        <h1 class="portal-title">Admin Portal</h1>
+        <div class="user-info">
+          <div class="top-greeting" aria-live="polite" style="margin-right:12px; text-align:right; color:#fff; margin-left:8px;">
+            <div id="topGreetingName" style="font-weight:700; font-size:14px;">Good Morning, Admin</div>
+            <div id="topGreetingTime" style="font-size:12px; opacity:0.95; margin-top:2px;">Tuesday, Oct 14, 2025 — 02:51 AM</div>
+          </div>
+          <div style="position:relative;display:inline-block;">
+            <button id="notifBtn" class="icon-btn" aria-expanded="false" title="Notifications" style="color:white;background:#16a34a;padding:8px;border-radius:8px;border:0;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(22,163,74,0.15);">
+              <i class="material-icons" style="color:white;font-size:20px;">notifications</i>
+            </button>
+            <div id="notifPanel" class="popover" data-open="false" style="position:fixed;right:20px;top:62px;min-width:280px;z-index:4500;display:none;">
+              <div class="notif-card" role="dialog" aria-label="Notifications" aria-hidden="true" style="border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(2,6,23,0.08);background:#fff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-width:280px;">
+                <div class="notif-header popover-header" style="background:#10b981;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+                  <div class="notif-title" style="font-weight:700;font-size:15px;">Notifications</div>
+                  <div id="notifTimestamp" class="notif-timestamp" style="font-size:12px;opacity:0.95;">--</div>
+                </div>
+                <div id="notifList" class="popover-body" style="color:#111827;padding:8px 12px;">
+                  <div class="popover-empty">No new notifications.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="position:relative;display:inline-block;margin-left:-8px;">
+            <button id="profileBtn" class="user-avatar" aria-haspopup="true" aria-expanded="false" title="Profile" style="border:0;cursor:pointer;padding:0;position:relative;overflow:hidden;">
+              <div id="profileBtnSpinner" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none">
+                <svg width="28" height="28" viewBox="0 0 50 50" aria-hidden="true">
+                  <circle cx="25" cy="25" r="18" fill="#ffffff" opacity="0.2"></circle>
+                  <path fill="#10B981" d="M25 5a20 20 0 0 1 0 6a14 14 0 1 0 0 28 14 14 0 0 1 0-34">
+                    <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                  </path>
+                </svg>
+              </div>
+              <div id="profileBtnDefaultIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="#9CA3AF"></path>
+                  <path d="M3 20c0-2.761 4.477-5 9-5s9 2.239 9 5v1H3v-1z" fill="#9CA3AF"></path>
+                </svg>
+              </div>
+            </button>
+
+            <div id="profileDropdown" class="dropdown profile-dropdown" aria-hidden="true" style="position:fixed;right:20px;top:62px;min-width:320px;z-index:3000;">
+              <div style="background:#fff;border-radius:12px;padding:10px;min-width:320px;box-shadow:0 12px 30px rgba(2,6,23,0.12);font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;">
+                <div style="display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                  <div class="avatar-large" id="profileAvatar" style="width: 80px;height:80px;border-radius:60px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;font-size:18px"></div>
+                  <div style="flex:1;min-width:0">
+                    <div id="profileGreeting" style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hi, Admin</div>
+                    <div id="profileEmail" style="font-size:13px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">you@example.com</div>
+                  </div>
+                </div>
+                <div style="padding:8px 6px;display:flex;flex-direction:column;gap:6px">
+                  <a id="accountEdit" class="profile-item" href="admin_profile.html" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit">
+                    <i class="material-icons icon" style="font-size:18px;line-height:1;">person</i>
+                    <span style="flex:1;text-align:left">Manage your profile</span>
+                  </a>
+                  <button id="accountSettings" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                    <i class="material-icons icon" style="font-size:18px;line-height:1;">settings</i>
+                    <span style="flex:1;text-align:left">Settings & privacy</span>
+                    <i class="material-icons icon" style="font-size:16px;opacity:0.7;">chevron_right</i>
+                  </button>
+                  <button id="accountLogout" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px;color:#111;font-weight:600">
+                    <i class="material-icons icon" style="font-size:18px;line-height:1;color:#ef4444">logout</i>
+                    <span style="flex:1;text-align:left">Log Out</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <nav class="nav-menu">
+                <nav class="nav" id="nav" style="display:flex;flex-direction:column;gap:8px;padding:12px;">
+                    <button class="nav-item" onclick="location.href='admin_dashboard.html'" data-name="Dashboard">
+                        <span class="material-icons icon" style="font-size:26px;">dashboard</span>
+                        <span class="label" style="font-size:15px;">Home</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_user_management.html'" data-name="User Management">
+                        <span class="material-icons icon" style="font-size:26px;">groups</span>
+                        <span class="label" style="font-size:15px;">Student Management</span>
+                    </button>
+                    <button class="nav-item active" onclick="location.href='admin_counselor_management.html'" data-name="Counselor Management">
+                        <span class="material-icons icon" style="font-size:26px;">psychology</span>
+                        <span class="label" style="font-size:15px;">Counselor Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_content_management.html'" data-name="Content Management">
+                        <span class="material-icons icon" style="font-size:26px;">description</span>
+                        <span class="label" style="font-size:15px;">Content Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_report_management.html'" data-name="Reports Management">
+                        <span class="material-icons icon" style="font-size:26px;">warning</span>
+                        <span class="label">Reports Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_session_report.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">fact_check</span>
+                        <span class="label">Session Reports</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_psych_test.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">assessment</span>
+                        <span class="label">Psychological Test</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_settings.html'" data-name="System Settings">
+                        <span class="material-icons icon" style="font-size:26px;">settings</span>
+                        <span class="label" style="font-size:15px;">System Settings</span>
+                    </button>
+                </nav>
+            </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" id="sidebarLogoutBtn" type="button" title="Sign out">
+          <i class="material-icons icon" style="font-size:26px;">logout</i>
+          <span class="label" style="font-size:15px;">Logout</span>
+        </button>
+      </div>
+        </aside>
+        <main class="main-content" id="mainContent">
+        <div class="card-container">
+          <div class="card">
+            <div class="card-title">Counselor Management</div>
+            <div class="table-controls" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap;">
+              <div class="left-controls" style="display:flex;align-items:center;gap:8px;">
+                <label style="white-space:nowrap;">Show
+                  <select id="entriesPerPage" style="margin:0 6px;padding:6px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                entries</label>
+              </div>
+
+              <div class="right-controls" style="display:flex;align-items:center;gap:12px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                 
+                  <input id="searchInput" type="text" placeholder="🔎Search counselors..." aria-label="Search counselors" style="padding:8px;border-radius:6px;border:1px solid #e5e7eb;min-width:220px;" />
+                </div>
+                <div class="search-actions" style="display:flex; gap:8px; align-items:center;">
+                  <button type="button" class="add-counselor-btn" id="openAddModal"><i class="fa fa-user-plus"></i> Add Counselor</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="successMessage" class="success-notification" style="display: none;">
+              <i class="fas fa-check-circle"></i>
+              <span id="successMessageText"></span>
+              <button type="button" class="close-notification" id="closeSuccessMessage">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div class="table-container">
+              <table class="user-table">
+                <thead>
+                  <tr>
+                    <th class="photo-col">Photo</th>
+                    <th>Counselor ID</th>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Campus</th>
+                    <th>College</th>
+                    <th>Login Access</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody">
+                  </tbody>
+              </table>
+            </div>
+
+            <!-- Card footer (keeps pagination visible outside scrollable table) -->
+            <div class="card-footer">
+              <div class="table-footer" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;width:100%;">
+                <div id="entriesInfo" style="color:#374151;font-size:14px;">Showing 0 to 0 of 0 entries</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="pagination-controls">
+                    <button id="prevPage" type="button" aria-label="Previous page"><span class="material-icons">chevron_left</span></button>
+                    <div id="currentPage">1</div>
+                    <button id="nextPage" type="button" aria-label="Next page"><span class="material-icons">chevron_right</span></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <script>
+              (function(){
+                // Client-side pagination & search for counselor table
+                const rowsContainer = document.getElementById('userTableBody');
+                const entriesSelect = document.getElementById('entriesPerPage');
+                const searchInput = document.getElementById('searchInput');
+                const entriesInfo = document.getElementById('entriesInfo');
+                const prevBtn = document.getElementById('prevPage');
+                const nextBtn = document.getElementById('nextPage');
+                const currentPageEl = document.getElementById('currentPage');
+
+                let allRows = [];
+                let filteredRows = [];
+                let currentPage = 1;
+
+                function collectRows(){
+                  // live collection of <tr> elements
+                  allRows = Array.from(rowsContainer.querySelectorAll('tr'));
+                }
+
+                function applyFilter(){
+                  const q = (searchInput.value || '').trim().toLowerCase();
+                  if(!q){
+                    filteredRows = allRows.slice();
+                  } else {
+                    filteredRows = allRows.filter(tr => {
+                      const text = tr.innerText.replace(/\s+/g,' ').toLowerCase();
+                      return text.indexOf(q) !== -1;
+                    });
+                  }
+                  currentPage = 1; // reset to first page when filter changes
+                }
+
+                function render(){
+                  const perPage = parseInt(entriesSelect.value, 10) || 10;
+                  const total = filteredRows.length;
+                  const totalPages = Math.max(1, Math.ceil(total / perPage));
+                  if(currentPage > totalPages) currentPage = totalPages;
+
+                  const startIdx = (currentPage - 1) * perPage;
+                  const endIdx = Math.min(startIdx + perPage, total);
+
+                  // hide all first
+                  allRows.forEach(r => r.style.display = 'none');
+                  // show range
+                  for(let i = startIdx; i < endIdx; i++){
+                    filteredRows[i].style.display = '';
+                  }
+
+                  // update info text
+                  const showingFrom = total === 0 ? 0 : startIdx + 1;
+                  const showingTo = endIdx;
+                  entriesInfo.innerText = `Showing ${showingFrom} to ${showingTo} of ${total} entries`;
+
+                  // update buttons and page
+                  currentPageEl.innerText = String(currentPage);
+                  prevBtn.disabled = currentPage <= 1;
+                  nextBtn.disabled = currentPage >= totalPages;
+                }
+
+                // initialize
+                function init(){
+                  collectRows();
+                  applyFilter();
+                  render();
+
+                  // observers: if rows change (added/removed), re-collect and rerender
+                  const mo = new MutationObserver(()=>{
+                    collectRows(); applyFilter(); render();
+                  });
+                  mo.observe(rowsContainer, { childList: true, subtree: false });
+
+                  // events
+                  searchInput.addEventListener('input', ()=>{ applyFilter(); render(); });
+                  entriesSelect.addEventListener('change', ()=>{ currentPage = 1; render(); });
+                  prevBtn.addEventListener('click', ()=>{ if(currentPage>1){ currentPage--; render(); }});
+                  nextBtn.addEventListener('click', ()=>{ const perPage = parseInt(entriesSelect.value,10)||10; const total = filteredRows.length; const totalPages = Math.max(1, Math.ceil(total/perPage)); if(currentPage<totalPages){ currentPage++; render(); }});
+                }
+
+                // wait until DOM is ready (in case script is inserted before rows are populated)
+                if(document.readyState === 'loading'){
+                  document.addEventListener('DOMContentLoaded', init);
+                } else {
+                  init();
+                }
+              })();
+            </script>
+          </div>
+        </div>
+
+        <div class="modal" id="addModal" aria-hidden="true">
+          <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="addModalLabel">
+            <div class="modal-header" id="addModalLabel">Add Counselor</div>
+            
+            <div class="photo-section">
+              <label class="photo-label">Photo</label>
+              <div class="photo-upload-area">
+                <img id="add_photoPreview" alt="Preview" class="photo-preview-img" style="display:none;" src="">
+                <div class="file-input-wrapper">
+                  <label for="add_photo" class="file-input-label">Choose File</label>
+                  <span class="file-status" id="add_fileStatus">No file chosen</span>
+                  <input id="add_photo" type="file" accept="image/*" style="display:none;">
+                </div>
+              </div>
+              <div class="photo-hint">Accepted: JPG/PNG up to ~1MB. Square images look best.</div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Username <span class="req">*</span></label>
+                <input id="add_username" type="text" required="">
+              </div>
+              <div class="form-field">
+                <label>First name <span class="req">*</span></label>
+                <input id="add_firstName" type="text" required="">
+              </div>
+              <div class="form-field">
+                <label>Middle initial</label>
+                <input id="add_middleInitial" type="text" maxlength="2" placeholder="e.g., A or A.">
+              </div>
+              <div class="form-field">
+                <label>Last name <span class="req">*</span></label>
+                <input id="add_lastName" type="text" required="">
+              </div>
+              <div class="form-field">
+                <label>Suffix</label>
+                <input id="add_suffix" type="text" placeholder="e.g., Jr., Sr.">
+              </div>
+              <div class="form-field">
+                <label>Professional Suffix</label>
+                <input id="add_profSuffix" type="text" placeholder="e.g., PhD, RGC">
+              </div>
+              <div class="form-field">
+                <label>Role</label>
+                <input id="add_role" type="text" value="Counselor" readonly>
+              </div>
+              <div class="form-field">
+                <label>Email <span class="req">*</span></label>
+                <input id="add_email" type="email" required="" pattern=".+@.+">
+              </div>
+              <div class="form-field">
+                <label>Phone number</label>
+                <input id="add_phone" type="tel" inputmode="numeric" maxlength="11" pattern="\d*">
+              </div>
+              <div class="form-field">
+                <label>Birthday</label>
+                <input id="add_birthday" type="date" placeholder="dd/mm/yyyy">
+              </div>
+              <div class="form-field">
+                <label>Gender</label>
+                <select id="add_gender">
+                  <option value="" disabled selected hidden>-- Select --</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Mental Health Professional <span class="req">*</span></label>
+                <select id="add_specialization" required="">
+                  <option value="" disabled selected hidden>-- Select --</option>
+                  <option value="Advocate">Advocate</option>
+                  <option value="Counselor">Counselor</option>
+                  <option value="Psychologist">Psychologist</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Campus <span class="req">*</span></label>
+                <select id="add_campus" required="">
+                  <option value="" disabled selected hidden>-- Select campus --</option>
+                  <option value="Main Campus">Main Campus</option>
+                  <option value="Cajidiocan Campus">Cajidiocan Campus</option>
+                  <option value="San Fernando Campus">San Fernando Campus</option>
+                  <option value="Romblon Campus">Romblon Campus</option>
+                  <option value="San Agustin Campus">San Agustin Campus</option>
+                  <option value="Sta. Maria Campus">Sta. Maria Campus</option>
+                  <option value="Sta. Fe Campus">Sta. Fe Campus</option>
+                  <option value="Calatrava Campus">Calatrava Campus</option>
+                   <option value="San Andres Campus">San Andres Campus</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>College <span class="req">*</span></label>
+                <select id="add_college">
+                  <option value="" disabled selected hidden>-- Select college --</option>
+                  <option value="College of Education">College of Education</option>
+                  <option value="College of Business and Accountancy">College of Business and Accountancy</option>
+                  <option value="College of Arts and Sciences">College of Arts and Sciences</option>
+                  <option value="College of Engineering and Technology">College of Engineering and Technology</option>
+                  <option value="College of Computing, Multimedia Arts and Digital Innovation">College of Computing, Multimedia Arts and Digital Innovation</option>
+                  <option value="CAFES">CAFES</option>
+                </select>
+              </div>
+              
+            </div>
+
+            <div id="addMessage" class="notice" style="margin-top: 8px; font-size: 14px; color: rgb(185, 28, 28); min-height: 18px; display: none;"></div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn btn-cancel" id="cancelAdd">Cancel</button>
+              <button type="button" class="btn btn-primary" id="confirmAdd">
+                <span id="addBtnText">Add</span>
+                <i id="addBtnSpinner" class="fa fa-spinner fa-spin" style="display:none; margin-left:6px;"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal" id="viewEditModal" aria-hidden="true">
+          <div class="modal-content wide" role="dialog" aria-modal="true" aria-labelledby="viewEditLabel">
+            <div class="modal-header" id="viewEditLabel">View / Edit Counselor</div>
+            
+            <input type="hidden" id="ve_counselorId" />
+            
+            <div class="photo-section">
+              <label class="photo-label">Photo</label>
+              <div class="photo-upload-area">
+                <img id="ve_photoPreview" alt="Preview" class="photo-preview-img" style="display:none;" src="">
+                <div class="file-input-wrapper">
+                  <label for="ve_photo" class="file-input-label">Change Photo</label>
+                  <span class="file-status" id="ve_fileStatus">No file chosen</span>
+                  <input id="ve_photo" type="file" accept="image/*" style="display:none;">
+                </div>
+              </div>
+              <div class="photo-hint">Change photo (optional).</div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-field">
+                <label>Username <span class="req">*</span></label>
+                <input id="ve_username" type="text" required="">
+              </div>
+              <div class="form-field">
+                <label>First name <span class="req">*</span></label>
+                <input id="ve_firstName" type="text" required="">
+              </div>
+              <div class="form-field">
+                <label>Middle initial</label>
+                <input id="ve_middleInitial" type="text" maxlength="2" placeholder="e.g., A or A.">
+              </div>
+              <div class="form-field">
+                <label>Last name <span class="req">*</span></label>
+                <input id="ve_lastName" type="text" required="">
+              </div>
+              <div class="form-field">
+                <label>Suffix</label>
+                <input id="ve_suffix" type="text" placeholder="e.g., Jr., Sr.">
+              </div>
+              <div class="form-field">
+                <label>Professional Suffix</label>
+                <input id="ve_profSuffix" type="text" placeholder="e.g., PhD, RGC">
+              </div>
+              <div class="form-field">
+                <label>Email <span class="req">*</span></label>
+                <input id="ve_email" type="email" required="" pattern=".+@.+">
+              </div>
+              <div class="form-field">
+                <label>Phone number</label>
+                <input id="ve_phone" type="tel" inputmode="numeric" maxlength="11" pattern="\d*">
+              </div>
+              <div class="form-field">
+                <label>Birthday</label>
+                <input id="ve_birthday" type="date" placeholder="dd/mm/yyyy">
+              </div>
+              <div class="form-field">
+                <label>Gender</label>
+                <select id="ve_gender">
+                  <option value="" disabled selected hidden>-- Select --</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Mental Health Professional <span class="req">*</span></label>
+                <select id="ve_specialization" required="">
+                  <option value="" disabled selected hidden>-- Select --</option>
+                  <option value="Advocate">Advocate</option>
+                  <option value="Counselor">Counselor</option>
+                  <option value="Psychologist">Psychologist</option>
+                </select>
+              </div>
+              
+              <div class="form-field">
+                <label>Campus <span class="req">*</span></label>
+                <select id="ve_campus" required="">
+                  <option value="" disabled selected hidden>-- Select campus --</option>
+                  <option value="Main Campus">Main Campus</option>
+                  <option value="Cajidiocan Campus">Cajidiocan Campus</option>
+                  <option value="San Fernando Campus">San Fernando Campus</option>
+                  <option value="Romblon Campus">Romblon Campus</option>
+                  <option value="San Agustin Campus">San Agustin Campus</option>
+                  <option value="Sta. Maria Campus">Sta. Maria Campus</option>
+                  <option value="Sta. Fe Campus">Sta. Fe Campus</option>
+                  <option value="Calatrava Campus">Calatrava Campus</option>
+                  <option value="San Andres Campus">San Andres Campus</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>College <span class="req">*</span></label>
+                <select id="ve_college">
+                  <option value="" disabled selected hidden>-- Select college --</option>
+                  <option value="College of Education">College of Education</option>
+                  <option value="College of Business and Accountancy">College of Business and Accountancy</option>
+                  <option value="College of Arts and Sciences">College of Arts and Sciences</option>
+                  <option value="College of Engineering and Technology">College of Engineering and Technology</option>
+                  <option value="College of Computing, Multimedia Arts and Digital Innovation">College of Computing, Multimedia Arts and Digital Innovation</option>
+                  <option value="CAFES">CAFES</option>
+                </select>
+              </div>
+              
+              <div class="form-field">
+                <label>Role</label>
+                <input id="ve_role" type="text" value="Counselor" readonly>
+              </div>
+            </div>
+
+            <div id="veMessage" class="notice" style="margin-top:8px; font-size:14px; color: rgb(185, 28, 28); min-height: 18px; display: none;"></div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-cancel" id="ve_closeBtn">Close</button>
+              <button type="button" class="btn btn-primary" id="ve_saveBtn" style="display:none;">Save</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <div class="modal large" id="cropModal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="cropModalLabel">
+        <div class="modal-header" id="cropModalLabel">Crop Photo</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div id="cropWrap" style="width:100%; max-height:60vh; overflow:hidden;">
+            <img id="cropImage" alt="Crop" />
+          </div>
+          <div class="photo-hint">Drag to adjust. The result will be a square image.</div>
+        </div>
+        <div class="modal-actions" style="margin-top:14px;">
+          <button type="button" class="btn btn-cancel" id="cropCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-primary" id="cropApplyBtn">Apply</button>
+        </div>
+      </div>
+    </div>
+<div class="modal" id="imgPreviewModal" aria-hidden="true">
+      <div class="modal-content img-preview" role="dialog" aria-modal="true" aria-labelledby="imgPreviewLabel">
+        <div class="modal-header" id="imgPreviewLabel">Photo Preview</div>
+        <div class="img-preview-box">
+          <img id="imgPreviewEl" alt="Counselor Photo" />
+        </div>
+        <div class="modal-actions" style="margin-top:14px;">
+          <button type="button" class="btn btn-primary" id="imgPreviewCloseBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal confirm-modal" id="addConfirmModal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="addConfirmLabel">
+        <div class="modal-header" id="addConfirmLabel">
+          Confirm
+        </div>
+        <div class="confirm-message">
+          Are you sure you want to add this counselor?
+        </div>
+        <div class="confirm-details" id="addConfirmDetails">
+          </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-no" id="addConfirmCancel">No</button>
+          <button type="button" class="btn btn-yes" id="addConfirmProceed">
+            <span id="addConfirmText">Yes</span>
+            <i id="addConfirmSpinner" class="fa fa-spinner fa-spin" style="display:none; margin-left:6px;"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal confirm-modal" id="updateConfirmModal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="updateConfirmLabel">
+        <div class="modal-header" id="updateConfirmLabel">
+          Confirm
+        </div>
+        <div class="confirm-message">
+          Are you sure you want to save changes?
+        </div>
+        <div class="confirm-details" id="updateConfirmDetails">
+          </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-no" id="updateConfirmCancel">No</button>
+          <button type="button" class="btn btn-yes" id="updateConfirmProceed">
+            <span id="updateConfirmText">Yes</span>
+            <i id="updateConfirmSpinner" class="fa fa-spinner fa-spin" style="display:none; margin-left:6px;"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal confirm-modal" id="deleteConfirmModal" aria-hidden="true">
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmLabel">
+        <div class="modal-header" id="deleteConfirmLabel">
+          Confirm
+        </div>
+        <div class="confirm-message">
+          Are you sure you want to remove?
+        </div>
+        <div class="confirm-details" id="deleteConfirmDetails">
+          </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-no" id="deleteConfirmCancel">No</button>
+          <button type="button" class="btn btn-yes" id="deleteConfirmProceed">
+            <span id="deleteConfirmText">Yes</span>
+            <i id="deleteConfirmSpinner" class="fa fa-spinner fa-spin" style="display:none; margin-left:6px;"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <script type="module">
+    // Reset Password Confirmation Modal logic
+    const resetPasswordConfirmModal = document.getElementById('resetPasswordConfirmModal');
+    const resetPasswordConfirmMessage = document.getElementById('resetPasswordConfirmMessage');
+    const resetPasswordConfirmYes = document.getElementById('resetPasswordConfirmYes');
+    const resetPasswordConfirmNo = document.getElementById('resetPasswordConfirmNo');
+    const resetPasswordConfirmClose = document.getElementById('resetPasswordConfirmClose');
+    let pendingResetEmail = null;
+    function openResetPasswordConfirmModal(email) {
+      pendingResetEmail = email;
+      resetPasswordConfirmMessage.textContent = `Reset password for ${email}?`;
+      resetPasswordConfirmModal.style.display = 'flex';
+    }
+    function closeResetPasswordConfirmModal() {
+      resetPasswordConfirmModal.style.display = 'none';
+      pendingResetEmail = null;
+    }
+    resetPasswordConfirmNo?.addEventListener('click', closeResetPasswordConfirmModal);
+    resetPasswordConfirmClose?.addEventListener('click', closeResetPasswordConfirmModal);
+    resetPasswordConfirmYes?.addEventListener('click', async () => {
+      if (pendingResetEmail) {
+        try {
+          await sendReset(pendingResetEmail);
+          try { if (window.pushLocalActivity) window.pushLocalActivity(`Reset password for ${pendingResetEmail}`, '🔑'); } catch(e) { console.warn('pushLocalActivity error', e); }
+        } catch(e) {
+          console.error('sendReset error', e);
+        }
+        closeResetPasswordConfirmModal();
+      }
+    });
+      import Cropper from "https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js";
+      import {
+        fetchCounselors,
+        getCounselor,
+        addCounselorRecord,
+        updateCounselor,
+        deleteCounselor,
+        toggleCounselorLogin,
+        openModal,
+        closeModal,
+        enableRowSelection,
+        enableSearchFilter,
+        sendReset
+  } from "./admin_main.js";
+
+      // Local activity logger (writes to shared key used by admin dashboard)
+      (function registerLocalActivityHelper(){
+        const KEY = 'admin_recent_activity';
+        const MAX = 20;
+        function pushLocalActivity(text, icon) {
+          try {
+            const entry = { text: String(text || ''), ts: (new Date()).toISOString(), icon: icon || '' };
+            const raw = localStorage.getItem(KEY);
+            let arr = [];
+            try { arr = raw ? JSON.parse(raw) : []; } catch(e){ arr = []; }
+            arr.unshift(entry);
+            if (arr.length > MAX) arr = arr.slice(0, MAX);
+            localStorage.setItem(KEY, JSON.stringify(arr));
+          } catch (e) { console.warn('pushLocalActivity failed', e); }
+        }
+        try { window.pushLocalActivity = pushLocalActivity; } catch(e){}
+      })();
+
+      // Table skeleton row helpers (shimmer placeholders)
+      function showUsersSkeleton(rows = 8) {
+        try {
+          const tbody = document.getElementById('userTableBody');
+          if (!tbody) return;
+          const skeletons = Array.from({length: rows}).map(() => `
+            <tr>
+              <td style="padding:8px;"><div class="skeleton-circle"></div></td>
+              <td style="padding:8px;"><div class="skeleton-line" style="width:80px;height:14px;border-radius:8px"></div></td>
+              <td style="padding:8px;"><div class="skeleton-line" style="width:160px;height:14px;border-radius:8px"></div></td>
+              <td style="padding:8px;"><div class="skeleton-line" style="width:180px;height:14px;border-radius:8px"></div></td>
+              <td style="padding:8px;"><div class="skeleton-line" style="width:100px;height:14px;border-radius:8px"></div></td>
+              <td style="padding:8px;"><div class="skeleton-line" style="width:80px;height:14px;border-radius:8px"></div></td>
+              <td style="padding:8px;"><div class="skeleton-line" style="width:60px;height:14px;border-radius:8px"></div></td>
+              <td style="padding:8px;text-align:right;"><div class="skeleton-line" style="width:36px;height:14px;border-radius:8px;margin-left:auto"></div></td>
+            </tr>
+          `).join('');
+          tbody.innerHTML = skeletons;
+        } catch (e) { /* ignore */ }
+      }
+      function hideUsersSkeleton() { try { const tbody = document.getElementById('userTableBody'); if (tbody) { /* no-op: rows replaced by real data */ } } catch (e) {} }
+
+      // Render table
+      async function fetchAndDisplayUsers() {
+        const tableBody = document.getElementById("userTableBody");
+        if (!tableBody) return;
+        // show skeleton rows immediately while data is fetched
+        showUsersSkeleton(8);
+        const users = await fetchCounselors();
+        // clear skeletons now that we have real data
+        tableBody.innerHTML = "";
+        for (const counselorId in users) {
+          const u = users[counselorId] || {};
+          const username = u.username || u.Username || "";
+          const firstName = u.first_name || u.First_Name || "";
+          const lastName = u.last_name || u.Last_Name || "";
+          const middle = u.middle_initial || u.middleInitial || "";
+          const suffix = u.suffix || u.Suffix || "";
+          const professionalSuffix = u.professional_suffix || u.prof_suffix || u.professionalSuffix || "";
+          const nameBase = `${firstName} ${middle ? (middle + ' ') : ''}${lastName}`.trim();
+          const fullName = nameBase + (suffix ? `, ${suffix}` : ``) + (professionalSuffix ? `, ${professionalSuffix}` : ``);
+          const email = u.email_address || u.Email || u.email || "";
+          const campus = u.campus || u.campus_branch || u.campusName || "";
+          const college = u.college || "";
+          const loginVal = (u.login ?? u.login_access ?? u.loginAccess ?? "").toString().toLowerCase();
+          const loginChecked = (loginVal === "enable" || loginVal === "enabled" || loginVal === "on" || loginVal === "true");
+          const photoUrl = u.photo_url || u.photo || u.avatar || "";
+
+          const tr = document.createElement("tr");
+          tr.dataset.id = counselorId;
+          const initials = (firstName?.[0] || "").toUpperCase() + (lastName?.[0] || "").toUpperCase();
+          tr.innerHTML = `
+            <td class="photo-col">${photoUrl ? `<img src="${photoUrl}" alt="Photo" class="avatar" data-photo="${photoUrl}" title="Click to view" />` : `<div class="avatar-fallback" title="${fullName || username}">${initials || '👤'}</div>`}</td>
+            <td>${counselorId}</td>
+            <td>${username}</td>
+            <td>${fullName}</td>
+            <td>${email}</td>
+            <td>${campus}</td>
+            <td>${college}</td>
+            <td>
+              <label class="switch" title="If OFF, counselor cannot login to the system">
+                <input type="checkbox" class="login-switch" data-id="${counselorId}" ${loginChecked ? "checked" : ""} />
+                <span class="slider"></span>
+              </label>
+              <span class="login-label" title="If OFF, counselor cannot login">${loginChecked ? "On" : "Off"}</span>
+            </td>
+            <td class="action-icons">
+              <i class="fa fa-eye view" title="View"></i>
+              <i class="fa fa-edit edit" title="Edit"></i>
+              <i class="fa fa-key reset" title="Reset Password"></i>
+              <i class="fa fa-trash delete" title="Delete"></i>
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        }
+      }
+      fetchAndDisplayUsers();
+
+      // Table actions
+      const tableBody = document.getElementById("userTableBody");
+      tableBody.addEventListener("click", async (e) => {
+        const row = e.target.closest("tr");
+        if (!row) return;
+        const counselorId = row.dataset.id;
+        if (!counselorId) return;
+
+        // Photo preview (if image exists)
+        const photoCell = e.target.closest('td.photo-col');
+        if (photoCell) {
+          const img = e.target.closest('img');
+          const full = img?.dataset?.photo;
+          if (full) {
+            imgPreviewEl.src = full;
+            openModal(imgPreviewModal);
+            return;
+          }
+        }
+
+        // Reset password
+        if (e.target.classList.contains("reset")) {
+          try {
+            const counselorData = await getCounselor(counselorId) || {};
+            const emailreset = counselorData.email_address || counselorData.Email || counselorData.email || "";
+            if (!emailreset) throw new Error("No email found for counselor.");
+            openResetPasswordConfirmModal(emailreset);
+          } catch (err) {
+            alert("Failed to load counselor data for resetting of password.");
+          }
+          return;
+        }
+
+        // Delete
+        if (e.target.classList.contains("delete")) {
+          try {
+            const counselorData = await getCounselor(counselorId) || {};
+            const middle = counselorData.middle_initial || counselorData.middleInitial || '';
+            const suffix = counselorData.suffix || counselorData.Suffix || '';
+            const prof = counselorData.professional_suffix || counselorData.prof_suffix || counselorData.professionalSuffix || '';
+            const nameBase = `${counselorData.first_name || ''} ${middle ? (middle + ' ') : ''}${counselorData.last_name || ''}`.trim();
+            const fullName = nameBase + (suffix ? `, ${suffix}` : '') + (prof ? `, ${prof}` : '');
+            const username = counselorData.username || '';
+            showDeleteConfirmation(counselorId, fullName, username, row);
+          } catch (err) {
+            alert("Failed to load counselor data for deletion.");
+          }
+          return;
+        }
+
+        // View / Edit
+        if (e.target.classList.contains("view") || e.target.classList.contains("edit")) {
+          try {
+            const data = await getCounselor(counselorId) || {};
+            openViewEditModal(e.target.classList.contains("view") ? "view" : "edit", { counselorId, ...data });
+          } catch {
+            alert("Failed to load counselor.");
+          }
+          return;
+        }
+      });
+
+      // Login switch toggle (delegated)
+      document.getElementById("userTableBody")?.addEventListener("change", async (e) => {
+        const input = e.target;
+        if (!input || !input.classList.contains("login-switch")) return;
+        const id = input.dataset.id || input.closest("tr")?.dataset?.id;
+        if (!id) { input.checked = !input.checked; alert("Unable to determine Counselor ID."); return; }
+        const checked = !!input.checked;
+        input.disabled = true;
+        try {
+          // Temporarily suppress notifications for actions performed on this page
+          const _origCreate = window.createNotification;
+          const _origBroadcast = window.broadcastNotification;
+          try {
+            window.createNotification = async function(){};
+            window.broadcastNotification = async function(){};
+            await toggleCounselorLogin(id, checked);
+          } finally {
+            try { window.createNotification = _origCreate; } catch(e){}
+            try { window.broadcastNotification = _origBroadcast; } catch(e){}
+          }
+          const lbl = input.closest("td")?.querySelector(".login-label");
+          if (lbl) lbl.textContent = checked ? "On" : "Off";
+          try { if (window.pushLocalActivity) window.pushLocalActivity(`${checked ? 'Enabled' : 'Disabled'} login for counselor ID ${id}`, checked ? '🔓' : '🔒'); } catch(e) { console.warn('pushLocalActivity', e); }
+        } catch (err) {
+          input.checked = !checked;
+          alert("Failed to update login access: " + (err.message || err));
+        } finally {
+          input.disabled = false;
+        }
+      });
+
+      // Add Counselor modal
+      const addModal = document.getElementById("addModal");
+      const openBtn = document.getElementById("openAddModal");
+      const cancelBtn = document.getElementById("cancelAdd");
+      const confirmBtn = document.getElementById("confirmAdd");
+      const addBtnSpinner = document.getElementById("addBtnSpinner");
+      const add_username = document.getElementById("add_username");
+      const add_firstName = document.getElementById("add_firstName");
+      const add_lastName = document.getElementById("add_lastName");
+      const add_email = document.getElementById("add_email");
+      const add_phone = document.getElementById("add_phone");
+      const add_birthday = document.getElementById("add_birthday");
+      const add_gender = document.getElementById("add_gender");
+      const add_photo = document.getElementById("add_photo");
+      const add_photoPreview = document.getElementById("add_photoPreview");
+      const add_specialization = document.getElementById("add_specialization");
+      const add_role = document.getElementById("add_role");
+  const add_campus = document.getElementById("add_campus");
+  const add_college = document.getElementById("add_college");
+  const add_middleInitial = document.getElementById("add_middleInitial");
+  const add_suffix = document.getElementById("add_suffix");
+  const add_profSuffix = document.getElementById("add_profSuffix");
+  const addMessage = document.getElementById("addMessage");
+  // Cropper elements/state
+  const cropModal = document.getElementById("cropModal");
+
+      // Ensure CAFES option is available and auto-selected for San Andres Campus
+      (function(){
+        const campusToCollegeMap = {
+          'San Andres Campus': ['CAFES']
+        };
+
+        function ensureOption(selectEl, value, text){
+          if(!selectEl) return;
+          const exists = Array.from(selectEl.options).some(o => o.value === value);
+          if(!exists){
+            const opt = document.createElement('option');
+            opt.value = value; opt.text = text;
+            selectEl.appendChild(opt);
+          }
+        }
+
+        function handleCampusChange(campusId, collegeId){
+          const campusEl = document.getElementById(campusId);
+          const collegeEl = document.getElementById(collegeId);
+          if(!campusEl || !collegeEl) return;
+          campusEl.addEventListener('change', () => {
+            const val = campusEl.value;
+            if(campusToCollegeMap[val]){
+              campusToCollegeMap[val].forEach(c => ensureOption(collegeEl, c, c));
+              // select the first mapped college
+              collegeEl.value = campusToCollegeMap[val][0];
+            }
+          });
+        }
+
+        // Apply to add and view/edit forms
+        handleCampusChange('add_campus', 'add_college');
+        handleCampusChange('ve_campus', 've_college');
+      })();
+  const cropImage = document.getElementById("cropImage");
+  const cropApplyBtn = document.getElementById("cropApplyBtn");
+  const cropCancelBtn = document.getElementById("cropCancelBtn");
+  let cropper = null;
+  let pendingPhotoTarget = null; // 'add' | 'edit'
+  let addCroppedDataURL = "";   // holds cropped image for Add
+  let editCroppedDataURL = "";  // holds cropped image for Edit
+
+      function fileToDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // Validation helper for counselor fields
+      function validateCounselorFields({ middle_initial, phone, email }) {
+        // Middle initial: optional, but if provided must be a single letter (A-Z) with optional dot
+        if (middle_initial) {
+          const mi = (middle_initial || '').trim();
+          if (!/^[A-Za-z]\.?$/.test(mi)) return { ok: false, message: 'Middle initial must be a single letter (e.g., A or A.).' };
+        }
+
+        // Phone: optional, but if provided must be 11 digits (numbers only)
+        if (phone) {
+          const digits = (phone || '').toString().replace(/\D/g, '');
+          if (digits.length !== 11) return { ok: false, message: 'Contact number must be 11 digits (numbers only).' };
+        }
+
+        // Email: required pattern validation when provided
+        if (email) {
+          const e = (email || '').trim();
+          const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRe.test(e)) return { ok: false, message: 'Please enter a valid email address.' };
+        }
+
+        // Normalized forms
+        const normalized = {
+          middle_initial: middle_initial ? (middle_initial.replace('.', '').toUpperCase()) : '',
+          phone: phone ? (phone.toString().replace(/\D/g, '')) : '',
+          email: email ? email.trim() : ''
+        };
+
+        return { ok: true, normalized };
+      }
+
+      function openCropperForFile(file, target) {
+        pendingPhotoTarget = target; // 'add' or 'edit'
+        fileToDataURL(file).then((url) => {
+          cropImage.src = url;
+          openModal(cropModal);
+          setTimeout(() => {
+            if (cropper) { try { cropper.destroy(); } catch {} }
+            cropper = new Cropper(cropImage, {
+              aspectRatio: 1,
+              viewMode: 1,
+              autoCropArea: 1,
+              background: false,
+              responsive: true
+            });
+          }, 0);
+        });
+      }
+
+      cropCancelBtn?.addEventListener("click", () => {
+        try { cropper?.destroy(); } catch {}
+        cropper = null;
+        closeModal(cropModal);
+        // reset respective file input if canceled
+        if (pendingPhotoTarget === 'add') { if (add_photo) add_photo.value = ""; }
+        if (pendingPhotoTarget === 'edit') { if (ve_photo) ve_photo.value = ""; }
+        pendingPhotoTarget = null;
+      });
+
+      cropApplyBtn?.addEventListener("click", () => {
+        if (!cropper) return;
+        // export a 320x320 png for consistency
+        const canvas = cropper.getCroppedCanvas({ width: 320, height: 320 });
+        const dataUrl = canvas.toDataURL('image/png', 0.92);
+        if (pendingPhotoTarget === 'add') {
+          addCroppedDataURL = dataUrl;
+          add_photoPreview.src = dataUrl;
+          add_photoPreview.style.display = "block";
+        } else if (pendingPhotoTarget === 'edit') {
+          editCroppedDataURL = dataUrl;
+          ve_photoPreview.src = dataUrl;
+          ve_photoPreview.style.display = "block";
+        }
+        try { cropper.destroy(); } catch {}
+        cropper = null;
+        closeModal(cropModal);
+        pendingPhotoTarget = null;
+      });
+
+      add_photo?.addEventListener("change", async () => {
+        const file = add_photo.files?.[0];
+        const fileStatus = document.getElementById("add_fileStatus");
+        if (!file) { 
+          add_photoPreview.style.display = "none"; 
+          add_photoPreview.src = ""; 
+          addCroppedDataURL = "";
+          if (fileStatus) fileStatus.textContent = "No file chosen";
+          return; 
+        }
+        if (file.size > 4_000_000) { // allow up to ~4MB before crop
+          alert("Please choose an image up to ~4MB.");
+          add_photo.value = "";
+          if (fileStatus) fileStatus.textContent = "No file chosen";
+          return;
+        }
+        if (fileStatus) fileStatus.textContent = file.name;
+        openCropperForFile(file, 'add');
+      });
+
+      // Campus change handler for Add modal
+      add_campus?.addEventListener("change", () => {
+        const isMainCampus = add_campus.value === "Main Campus";
+        if (add_college) {
+          add_college.disabled = !isMainCampus;
+          if (!isMainCampus) {
+            add_college.value = "";
+          }
+        }
+      });
+
+      openBtn?.addEventListener("click", () => {
+        openModal(addModal);
+        add_username.value = "";
+        add_firstName.value = "";
+        add_lastName.value = "";
+        add_email.value = "";
+        if (add_phone) add_phone.value = "";
+        if (add_birthday) add_birthday.value = "";
+        if (add_gender) add_gender.value = "";
+        if (add_photo) add_photo.value = "";
+        if (add_photoPreview) { add_photoPreview.src = ""; add_photoPreview.style.display = "none"; }
+        addCroppedDataURL = "";
+        add_specialization.value = "";
+        if (add_role) add_role.value = "Counselor";
+  add_campus.value = "";
+  if (add_college) add_college.value = "";
+  if (add_middleInitial) add_middleInitial.value = "";
+  if (add_suffix) add_suffix.value = "";
+  if (add_profSuffix) add_profSuffix.value = "";
+        const fileStatus = document.getElementById("add_fileStatus");
+        if (fileStatus) fileStatus.textContent = "No file chosen";
+        if (addMessage) { addMessage.textContent = ""; addMessage.style.display = "none"; }
+      });
+      cancelBtn?.addEventListener("click", () => closeModal(addModal));
+
+      confirmBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        
+        const username = (add_username.value || "").trim();
+        const first_name = (add_firstName.value || "").trim();
+        const last_name = (add_lastName.value || "").trim();
+        const email = (add_email.value || "").trim();
+        const phone = (add_phone?.value || "").trim();
+        const birthday = (add_birthday?.value || "").trim();
+        const gender = (add_gender?.value || "").trim();
+        const specialization = (add_specialization.value || "").trim();
+        const role = (add_role?.value || "Counselor").trim();
+        const campus = (add_campus.value || "").trim();
+        const college = (add_college?.value || "").trim();
+
+        // Only require college when the college selector exists and is enabled
+        const collegeRequired = add_college && !add_college.disabled;
+        if (!username || !first_name || !last_name || !email || !specialization || !campus || (collegeRequired && !college)) {
+          if (addMessage) {
+            addMessage.textContent = "Please fill in all required fields (marked with *)";
+            addMessage.className = "notice error";
+            addMessage.style.display = "block";
+          }
+          return;
+        }
+
+        // Validate inputs (middle initial, phone, email)
+        const addValidation = validateCounselorFields({ middle_initial: add_middleInitial?.value, phone, email });
+        if (!addValidation.ok) {
+          if (addMessage) {
+            addMessage.textContent = addValidation.message;
+            addMessage.className = 'notice error';
+            addMessage.style.display = 'block';
+          } else {
+            alert(addValidation.message);
+          }
+          return;
+        }
+
+        const normalizedAdd = addValidation.normalized;
+
+        // Show confirmation modal with normalized values
+        showAddConfirmation({
+          username, first_name, last_name, email: normalizedAdd.email || email, phone: normalizedAdd.phone || phone, birthday, gender,
+          specialization, role, campus, college,
+          middle_initial: normalizedAdd.middle_initial || (add_middleInitial?.value?.trim() || ""),
+          suffix: add_suffix?.value?.trim() || "",
+          professional_suffix: add_profSuffix?.value?.trim() || "",
+          photo_url: addCroppedDataURL || ""
+        });
+      });
+
+      // View/Edit modal
+      const viewEditModal = document.getElementById("viewEditModal");
+      const ve_closeBtn = document.getElementById("ve_closeBtn");
+      const ve_saveBtn = document.getElementById("ve_saveBtn");
+      const ve_counselorId = document.getElementById("ve_counselorId");
+      const ve_username = document.getElementById("ve_username");
+      const ve_firstName = document.getElementById("ve_firstName");
+      const ve_lastName = document.getElementById("ve_lastName");
+      const ve_email = document.getElementById("ve_email");
+      const ve_phone = document.getElementById("ve_phone");
+      const ve_birthday = document.getElementById("ve_birthday");
+      const ve_gender = document.getElementById("ve_gender");
+      const ve_photo = document.getElementById("ve_photo");
+      const ve_photoPreview = document.getElementById("ve_photoPreview");
+      const ve_specialization = document.getElementById("ve_specialization");
+      const ve_role = document.getElementById("ve_role");
+      const ve_campus = document.getElementById("ve_campus");
+  const ve_college = document.getElementById("ve_college");
+  const ve_middleInitial = document.getElementById("ve_middleInitial");
+  const ve_suffix = document.getElementById("ve_suffix");
+  const ve_profSuffix = document.getElementById("ve_profSuffix");
+  const veMessage = document.getElementById("veMessage");
+
+  // Input constraints: middle initial, phone, email (Add & View/Edit)
+  (function attachInlineInputConstraints(){
+    // Middle initial: allow only letters and optional dot, max 2 chars, uppercase
+    function miHandler(e){
+      let v = (e.target.value || '').toString();
+      v = v.replace(/[^A-Za-z\.]/g, '');
+      if(v.length > 2) v = v.slice(0,2);
+      // If user entered more than 1 char and second isn't a dot, truncate to first
+      if(v.length > 1 && v[1] !== '.') v = v.slice(0,1);
+      e.target.value = v.toUpperCase();
+    }
+    try { if (add_middleInitial) add_middleInitial.addEventListener('input', miHandler); } catch(_){}
+    try { if (ve_middleInitial) ve_middleInitial.addEventListener('input', miHandler); } catch(_){}
+
+    // Phone: digits only, max 11
+    function phoneHandler(e){
+      let d = (e.target.value || '').toString().replace(/\D/g, '');
+      if(d.length > 11) d = d.slice(0,11);
+      e.target.value = d;
+    }
+    try { if (add_phone) add_phone.addEventListener('input', phoneHandler); } catch(_){}
+    try { if (ve_phone) ve_phone.addEventListener('input', phoneHandler); } catch(_){}
+
+    // Email: require '@' character - show inline message while typing
+    function emailHandlerFactory(messageEl){
+      return function(e){
+        const v = (e.target.value || '').toString();
+        if(messageEl){
+          if(v && !v.includes('@')){
+            messageEl.textContent = 'Email must contain @';
+            messageEl.className = 'notice error';
+            messageEl.style.display = 'block';
+          } else if(messageEl.textContent === 'Email must contain @'){
+            messageEl.textContent = '';
+            messageEl.style.display = 'none';
+          }
+        }
+      };
+    }
+    try { if (add_email) add_email.addEventListener('input', emailHandlerFactory(addMessage)); } catch(_){}
+    try { if (ve_email) ve_email.addEventListener('input', emailHandlerFactory(veMessage)); } catch(_){}
+  })();
+
+      function openViewEditModal(mode, data = {}) {
+        ve_counselorId.value = data.counselorId || data.key || "";
+        ve_username.value = data.username || "";
+        ve_firstName.value = data.first_name || "";
+        ve_lastName.value = data.last_name || "";
+        ve_email.value = data.email_address || data.email || "";
+        if (ve_phone) ve_phone.value = data.phone_number || "";
+        if (ve_birthday) ve_birthday.value = data.birthday || "";
+        if (ve_gender) ve_gender.value = data.gender || "";
+        
+        const existingPhoto = data.photo_url || data.photo || "";
+        if (existingPhoto) {
+          ve_photoPreview.src = existingPhoto;
+          ve_photoPreview.style.display = "block";
+        } else {
+          ve_photoPreview.src = "";
+          ve_photoPreview.style.display = "none";
+        }
+        editCroppedDataURL = "";
+        
+        const fileStatus = document.getElementById("ve_fileStatus");
+        if (fileStatus) fileStatus.textContent = "No file chosen";
+        
+        const spec = data.specialization || "";
+        if (spec && !Array.from(ve_specialization.options).some(o => o.value === spec)) {
+          const opt = document.createElement("option");
+          opt.value = spec;
+          opt.textContent = spec + " (legacy)";
+          ve_specialization.appendChild(opt);
+        }
+        ve_specialization.value = spec;
+  if (ve_middleInitial) ve_middleInitial.value = data.middle_initial || data.middleInitial || "";
+  if (ve_suffix) ve_suffix.value = data.suffix || data.suffix || "";
+  if (ve_profSuffix) ve_profSuffix.value = data.professional_suffix || data.prof_suffix || "";
+        if (ve_role) ve_role.value = data.role || "Counselor";
+        if (ve_campus) ve_campus.value = data.campus || "";
+        if (ve_college) {
+          ve_college.value = data.college || "";
+          const isMainCampus = (data.campus || "") === "Main Campus";
+          ve_college.disabled = !isMainCampus;
+        }
+
+        const readOnly = (mode === "view");
+        const fields = [ve_username, ve_firstName, ve_lastName, ve_email, ve_specialization, ve_photo];
+        if (ve_phone) fields.push(ve_phone);
+        if (ve_birthday) fields.push(ve_birthday);
+        if (ve_gender) fields.push(ve_gender);
+    if (ve_campus) fields.push(ve_campus);
+    if (ve_college) fields.push(ve_college);
+  if (ve_middleInitial) fields.push(ve_middleInitial);
+  if (ve_suffix) fields.push(ve_suffix);
+  if (ve_profSuffix) fields.push(ve_profSuffix);
+        
+        fields.forEach(i => i.disabled = readOnly);
+        ve_saveBtn.style.display = readOnly ? "none" : "";
+        openModal(viewEditModal);
+      }
+
+      function closeViewEditModal() { closeModal(viewEditModal); }
+
+      ve_closeBtn?.addEventListener("click", closeViewEditModal);
+      viewEditModal?.addEventListener("click", (ev) => { if (ev.target === viewEditModal) closeViewEditModal(); });
+
+      ve_photo?.addEventListener("change", () => {
+        const file = ve_photo.files?.[0];
+        const fileStatus = document.getElementById("ve_fileStatus");
+        if (!file) { 
+          editCroppedDataURL = "";
+          if (fileStatus) fileStatus.textContent = "No file chosen";
+          return; 
+        }
+        if (file.size > 4_000_000) { 
+          alert("Please choose an image up to ~4MB."); 
+          ve_photo.value = "";
+          if (fileStatus) fileStatus.textContent = "No file chosen";
+          return; 
+        }
+        if (fileStatus) fileStatus.textContent = file.name;
+        openCropperForFile(file, 'edit');
+      });
+
+      ve_campus?.addEventListener("change", () => {
+        const isMainCampus = ve_campus.value === "Main Campus";
+        if (ve_college) {
+          ve_college.disabled = !isMainCampus;
+          if (!isMainCampus) {
+            ve_college.value = "";
+          }
+        }
+      });
+
+      ve_saveBtn?.addEventListener("click", async () => {
+        const id = ve_counselorId.value;
+        if (!id) {
+          if (veMessage) { veMessage.textContent = 'Missing Counselor ID.'; veMessage.className = 'notice error'; veMessage.style.display = 'block'; }
+          return;
+        }
+        // Validate inputs (middle initial, phone, email) before showing update confirmation
+        const updateValidation = validateCounselorFields({ middle_initial: ve_middleInitial?.value, phone: ve_phone?.value, email: ve_email?.value });
+        if (!updateValidation.ok) {
+          if (veMessage) {
+            veMessage.textContent = updateValidation.message;
+            veMessage.className = 'notice error';
+            veMessage.style.display = 'block';
+            veMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else {
+            alert(updateValidation.message);
+          }
+          return;
+        }
+
+        const normalizedUpdate = updateValidation.normalized;
+
+        const updateObj = {
+          username: ve_username.value || "",
+          first_name: ve_firstName.value || "",
+          last_name: ve_lastName.value || "",
+          email_address: normalizedUpdate.email || ve_email.value || "",
+          phone_number: normalizedUpdate.phone || ve_phone?.value || "",
+          middle_initial: normalizedUpdate.middle_initial || (ve_middleInitial?.value?.trim() || ""),
+          birthday: ve_birthday?.value || "",
+          gender: ve_gender?.value || "",
+          specialization: ve_specialization.value || "",
+          role: ve_role?.value || "Counselor",
+          campus: ve_campus?.value || "",
+          college: ve_college?.value || "",
+          suffix: ve_suffix?.value?.trim() || "",
+          professional_suffix: ve_profSuffix?.value?.trim() || "",
+          status: "Active"
+        };
+        if (editCroppedDataURL) updateObj.photo_url = editCroppedDataURL;
+        
+        // Clear any previous ve message so confirmation is clean
+        if (veMessage) { veMessage.textContent = ''; veMessage.style.display = 'none'; }
+        showUpdateConfirmation(id, updateObj);
+      });
+
+      enableSearchFilter(document.getElementById("searchInput"), document.getElementById("userTableBody"), 8);
+      enableRowSelection(document.getElementById("userTableBody"));
+
+      function showSuccessMessage(message) {
+        const successMessage = document.getElementById("successMessage");
+        const successMessageText = document.getElementById("successMessageText");
+        
+        successMessageText.textContent = message;
+        successMessage.style.display = "flex";
+        
+        successMessage.scrollIntoView({ behavior: "smooth", block: "start" });
+        
+        setTimeout(() => {
+          hideSuccessMessage();
+        }, 5000);
+      }
+      
+      function hideSuccessMessage() {
+        const successMessage = document.getElementById("successMessage");
+        successMessage.style.display = "none";
+      }
+      
+      document.getElementById("closeSuccessMessage")?.addEventListener("click", hideSuccessMessage);
+
+      const imgPreviewModal = document.getElementById("imgPreviewModal");
+      const imgPreviewEl = document.getElementById("imgPreviewEl");
+      const imgPreviewCloseBtn = document.getElementById("imgPreviewCloseBtn");
+      imgPreviewCloseBtn?.addEventListener("click", () => closeModal(imgPreviewModal));
+      imgPreviewModal?.addEventListener("click", (e) => { if (e.target === imgPreviewModal) closeModal(imgPreviewModal); });
+
+      const addConfirmModal = document.getElementById("addConfirmModal");
+      const updateConfirmModal = document.getElementById("updateConfirmModal");
+      const deleteConfirmModal = document.getElementById("deleteConfirmModal");
+
+      function showAddConfirmation(counselorData) {
+        const details = document.getElementById("addConfirmDetails");
+        details.innerHTML = `
+          <strong>Name:</strong> ${counselorData.first_name} ${counselorData.last_name}<br>
+          <strong>Middle Initial:</strong> ${counselorData.middle_initial || 'None'}<br>
+          <strong>Suffix:</strong> ${counselorData.suffix || 'None'}<br>
+          <strong>Professional Suffix:</strong> ${counselorData.professional_suffix || 'None'}<br>
+          <strong>Username:</strong> ${counselorData.username}<br>
+          <strong>Email:</strong> ${counselorData.email}<br>
+          <strong>Phone:</strong> ${counselorData.phone || 'Not provided'}<br>
+          <strong>Birthday:</strong> ${counselorData.birthday || 'Not provided'}<br>
+          <strong>Gender:</strong> ${counselorData.gender || 'Not specified'}<br>
+          <strong>Campus:</strong> ${counselorData.campus}<br>
+          <strong>Role:</strong> ${counselorData.role || 'Counselor'}<br>
+          <strong>College:</strong> ${counselorData.college || 'Not specified'}<br>
+          <strong>Mental Health Professional:</strong> ${counselorData.specialization}
+        `;
+        openModal(addConfirmModal);
+      }
+
+      function showUpdateConfirmation(counselorId, updateData) {
+        const details = document.getElementById("updateConfirmDetails");
+        details.innerHTML = `
+          <strong>Counselor ID:</strong> ${counselorId}<br>
+          <strong>Name:</strong> ${updateData.first_name} ${updateData.last_name}<br>
+          <strong>Suffix:</strong> ${updateData.suffix || 'None'}<br>
+          <strong>Professional Suffix:</strong> ${updateData.professional_suffix || 'None'}<br>
+          <strong>Username:</strong> ${updateData.username}<br>
+          <strong>Email:</strong> ${updateData.email_address || 'Not provided'}<br>
+          <strong>Phone:</strong> ${updateData.phone_number || 'Not provided'}<br>
+          <strong>Birthday:</strong> ${updateData.birthday || 'Not provided'}<br>
+          <strong>Gender:</strong> ${updateData.gender || 'Not specified'}<br>
+          <strong>Mental Health Professional:</strong> ${updateData.specialization || 'Not specified'}<br>
+          <strong>Role:</strong> ${updateData.role || 'Counselor'}<br>
+          <strong>Campus:</strong> ${updateData.campus || 'Not specified'}<br>
+          <strong>College:</strong> ${updateData.college || 'Not specified'}
+        `;
+        openModal(updateConfirmModal);
+      }
+
+      function showDeleteConfirmation(counselorId, fullName, username, rowElement) {
+        const details = document.getElementById("deleteConfirmDetails");
+        details.innerHTML = `
+          <strong>Counselor ID:</strong> ${counselorId}<br>
+          <strong>Name:</strong> ${fullName || 'Unknown'}<br>
+          <strong>Username:</strong> ${username || 'Unknown'}
+        `;
+        deleteConfirmModal.dataset.counselorId = counselorId;
+        deleteConfirmModal.dataset.rowIndex = Array.from(rowElement.parentNode.children).indexOf(rowElement);
+        openModal(deleteConfirmModal);
+      }
+
+      document.getElementById("addConfirmCancel")?.addEventListener("click", () => closeModal(addConfirmModal));
+      document.getElementById("updateConfirmCancel")?.addEventListener("click", () => closeModal(updateConfirmModal));
+      document.getElementById("deleteConfirmCancel")?.addEventListener("click", () => closeModal(deleteConfirmModal));
+
+      document.getElementById("addConfirmProceed")?.addEventListener("click", async () => {
+        const btn = document.getElementById("addConfirmProceed");
+        const spinner = document.getElementById("addConfirmSpinner");
+        
+        btn.disabled = true;
+        spinner.style.display = "inline-block";
+        
+        try {
+          // Re-validate before final submission
+          const finalValidation = validateCounselorFields({ middle_initial: add_middleInitial?.value, phone: add_phone?.value, email: add_email?.value });
+          if (!finalValidation.ok) { alert(finalValidation.message); btn.disabled = false; spinner.style.display = 'none'; return; }
+          const finalNorm = finalValidation.normalized;
+
+          const counselorData = {
+            username: add_username.value.trim(),
+            first_name: add_firstName.value.trim(),
+            middle_initial: finalNorm.middle_initial || add_middleInitial?.value?.trim() || "",
+            last_name: add_lastName.value.trim(),
+            email_address: finalNorm.email || add_email.value.trim(),
+            phone_number: finalNorm.phone || add_phone?.value?.trim() || "",
+            birthday: add_birthday?.value?.trim() || "",
+            gender: add_gender?.value?.trim() || "",
+            specialization: add_specialization.value.trim(),
+            role: add_role?.value?.trim() || "Counselor",
+            campus: add_campus.value.trim(),
+            college: add_college?.value?.trim() || "",
+            suffix: add_suffix?.value?.trim() || "",
+            professional_suffix: add_profSuffix?.value?.trim() || "",
+            status: "Active",
+            photo_url: addCroppedDataURL || ""
+          };
+
+          let id, password;
+          try {
+            // Suppress notifications created by admin_main helpers for this page
+            const _origCreate = window.createNotification;
+            const _origBroadcast = window.broadcastNotification;
+            try {
+              window.createNotification = async function(){};
+              window.broadcastNotification = async function(){};
+              ({ id, password } = await addCounselorRecord(counselorData));
+            } finally {
+              try { window.createNotification = _origCreate; } catch(e){}
+              try { window.broadcastNotification = _origBroadcast; } catch(e){}
+            }
+          } catch (err) {
+            // If error is email already in use, show alert and close modal
+            if (err && err.message && err.message.includes("auth/email-already-in-use")) {
+              alert("Failed to add counselor: " + (err.message || err));
+              closeModal(addConfirmModal);
+              closeModal(addModal);
+              return;
+            } else {
+              throw err;
+            }
+          }
+
+          try {
+            await emailjs.send("service_jlchmap", "template_t6qpo7f", {
+              name: counselorData.first_name,
+              password,
+              email: counselorData.email_address,
+              year: new Date().getFullYear()
+            });
+          } catch (error) {
+            console.error("Email sending error:", error);
+          }
+
+          await fetchAndDisplayUsers();
+          closeModal(addConfirmModal);
+          closeModal(addModal);
+          showSuccessMessage("Counselor added successfully!");
+          try { if (window.pushLocalActivity) window.pushLocalActivity(`Added counselor ${counselorData.first_name} ${counselorData.last_name} (ID: ${id})`, '➕'); } catch(e) { console.warn('pushLocalActivity', e); }
+        } catch (err) {
+          console.error("Add counselor error:", err);
+          alert("Failed to add counselor: " + (err.message || err));
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      });
+
+      document.getElementById("updateConfirmProceed")?.addEventListener("click", async () => {
+        const btn = document.getElementById("updateConfirmProceed");
+        const spinner = document.getElementById("updateConfirmSpinner");
+        
+        btn.disabled = true;
+        spinner.style.display = "inline-block";
+        
+        try {
+          const id = ve_counselorId.value;
+          // Re-validate update payload before submitting
+          const updateValidation = validateCounselorFields({ middle_initial: ve_middleInitial?.value, phone: ve_phone?.value, email: ve_email?.value });
+          if (!updateValidation.ok) { alert(updateValidation.message); btn.disabled = false; spinner.style.display = 'none'; return; }
+          const updNorm = updateValidation.normalized;
+
+          const updateObj = {
+            username: ve_username.value || "",
+            first_name: ve_firstName.value || "",
+            last_name: ve_lastName.value || "",
+            email_address: updNorm.email || ve_email.value || "",
+            phone_number: updNorm.phone || ve_phone?.value || "",
+            middle_initial: updNorm.middle_initial || (ve_middleInitial?.value?.trim() || ""),
+            birthday: ve_birthday?.value || "",
+            gender: ve_gender?.value || "",
+            specialization: ve_specialization.value || "",
+            role: ve_role?.value || "Counselor",
+            campus: ve_campus?.value || "",
+            college: ve_college?.value || "",
+            suffix: ve_suffix?.value?.trim() || "",
+            professional_suffix: ve_profSuffix?.value?.trim() || "",
+            status: "Active"
+          };
+          if (editCroppedDataURL) updateObj.photo_url = editCroppedDataURL;
+
+          // Suppress notifications created by admin_main helpers for this page
+          const _origCreate2 = window.createNotification;
+          const _origBroadcast2 = window.broadcastNotification;
+          try {
+            window.createNotification = async function(){};
+            window.broadcastNotification = async function(){};
+            await updateCounselor(id, updateObj);
+          } finally {
+            try { window.createNotification = _origCreate2; } catch(e){}
+            try { window.broadcastNotification = _origBroadcast2; } catch(e){}
+          }
+          await fetchAndDisplayUsers();
+          closeModal(updateConfirmModal);
+          closeViewEditModal();
+          showSuccessMessage("Counselor updated successfully!");
+          try { if (window.pushLocalActivity) window.pushLocalActivity(`Updated counselor ${updateObj.first_name} ${updateObj.last_name} (ID: ${id})`, '✏️'); } catch(e) { console.warn('pushLocalActivity', e); }
+          
+        } catch (err) {
+          alert("Failed to save counselor: " + (err.message || err));
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      });
+
+      document.getElementById("deleteConfirmProceed")?.addEventListener("click", async () => {
+        const btn = document.getElementById("deleteConfirmProceed");
+        const spinner = document.getElementById("deleteConfirmSpinner");
+        
+        btn.disabled = true;
+        spinner.style.display = "inline-block";
+        
+        try {
+          const counselorId = deleteConfirmModal.dataset.counselorId;
+          const rowIndex = parseInt(deleteConfirmModal.dataset.rowIndex);
+          
+          // Suppress notifications created by admin_main helpers for this page
+          const _origCreate3 = window.createNotification;
+          const _origBroadcast3 = window.broadcastNotification;
+          try {
+            window.createNotification = async function(){};
+            window.broadcastNotification = async function(){};
+            await deleteCounselor(counselorId);
+          } finally {
+            try { window.createNotification = _origCreate3; } catch(e){}
+            try { window.broadcastNotification = _origBroadcast3; } catch(e){}
+          }
+          
+          const tableBody = document.getElementById("userTableBody");
+          const row = tableBody.children[rowIndex];
+          if (row) row.remove();
+          
+          closeModal(deleteConfirmModal);
+          showSuccessMessage("Counselor deleted successfully!");
+          try { if (window.pushLocalActivity) window.pushLocalActivity(`Deleted counselor (ID: ${counselorId})`, '🗑️'); } catch(e) { console.warn('pushLocalActivity', e); }
+          
+        } catch (err) {
+          alert("Failed to delete counselor: " + (err.message || err));
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      });
+    </script>
+    <script>
+        const menuIcon = document.getElementById('menuIcon');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarTop = document.getElementById('sidebarTop');
+        
+        // Create overlay for mobile
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        
+        // Mobile detection
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Toggle sidebar with mobile responsiveness
+        menuIcon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isMobile()) {
+                // Mobile behavior - overlay sidebar
+                const isOpen = sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active', isOpen);
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            } else {
+                // Desktop behavior - collapse sidebar
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            }
+        });
+        
+        // Close mobile sidebar when clicking overlay
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                // Reset mobile states when switching to desktop
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                // Ensure desktop state is consistent
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            } else {
+                // Reset desktop states when switching to mobile
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+        
+        // Close mobile sidebar when clicking a menu item
+        document.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', () => {
+                if (isMobile()) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+
+        // Initialize state for desktop on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isMobile()) {
+                // Default to uncollapsed on desktop for consistency with appointment.html default
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+  </script>
+  <script type="module">
+      import { requireAdminAuth } from './admin_main.js';
+      import { loadAdminProfileInto, startGreetingClock } from './admin_profile_loader.js';
+      requireAdminAuth();
+      loadAdminProfileInto({ greetingSelector: '#topGreetingName', avatarSelector: '.main-top-bar .user-avatar', timeSelector: '#topGreetingTime' });
+      startGreetingClock('#topGreetingName', '#topGreetingTime');
+    </script>
+  <script src="./profile_dropdown.js"></script>
+
+  <script>
+  (function(){
+    if (window.__sidebarLogoutHandlerAdded) return; window.__sidebarLogoutHandlerAdded = true;
+    function attachLogout(){
+      const sidebarLogout = document.getElementById('sidebarLogoutBtn');
+      if (!sidebarLogout) return;
+      // logout handled by modal-driven handler appended below
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachLogout); else attachLogout();
+  })();
+  </script>
+    <!-- Confirm modal for logout -->
+    <div id="confirmModalLogout" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3000">
+      <div style="background:#fff;border-radius:12px;padding:18px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+        <h3 id="confirmModalLogoutTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm</h3>
+        <div id="confirmModalLogoutMessage" style="font-size:15px;margin-bottom:12px;color:#111">Are you sure you want to sign out?</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="confirmModalLogoutCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+          <button id="confirmModalLogoutOk" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Confirm</button>
+        </div>
+      </div>
+    </div>
+    <script>
+    (function(){
+      function attachLogout(){
+        const sidebarLogout = document.getElementById('sidebarLogoutBtn');
+        if (!sidebarLogout) return;
+        if (sidebarLogout._logoutHandlerAttached) return;
+        sidebarLogout._logoutHandlerAttached = true;
+        const confirmModal = document.getElementById('confirmModalLogout');
+        const confirmOk = document.getElementById('confirmModalLogoutOk');
+        const confirmCancel = document.getElementById('confirmModalLogoutCancel');
+        function doLogout(){
+          const profileLogout = document.getElementById('accountLogout');
+          if (profileLogout) { profileLogout.click(); return; }
+          if (typeof window.signOutAndRedirect === 'function') { window.signOutAndRedirect(); return; }
+          try { localStorage.removeItem('authToken'); } catch(e){}
+          window.location.href = 'login.html';
+        }
+        sidebarLogout.addEventListener('click', () => {
+          if (!confirmModal || !confirmOk || !confirmCancel) { if (confirm('Are you sure you want to sign out?')) doLogout(); return; }
+          confirmModal.style.display = 'flex';
+          function cleanup(){ confirmModal.style.display = 'none'; confirmOk.removeEventListener('click', onOk); confirmCancel.removeEventListener('click', onCancel); document.removeEventListener('keydown', onKeyDown); }
+          function onOk(){ cleanup(); doLogout(); }
+          function onCancel(){ cleanup(); }
+          function onKeyDown(e){ if (e.key === 'Escape') cleanup(); }
+          confirmOk.addEventListener('click', onOk);
+          confirmCancel.addEventListener('click', onCancel);
+          document.addEventListener('keydown', onKeyDown);
+        });
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachLogout); else attachLogout();
+    })();
+    </script>
+</body>
+</html>

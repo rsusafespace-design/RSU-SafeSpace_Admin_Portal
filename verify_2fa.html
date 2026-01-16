@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Two-Factor Verification</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    body { font-family:Segoe UI, Arial, sans-serif; background:#f4f6f9; margin:0; }
+    .card { max-width:420px; margin:8vh auto; background:#fff; padding:24px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.08); }
+    h2 { margin:0 0 8px 0; color:#0f7a34; }
+    p { color:#555; margin:0 0 16px 0; }
+    input { width:100%; padding:12px 14px; border-radius:8px; border:1px solid #e6eef0; margin-bottom:12px; font-size:16px; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 14px; border-radius:8px; border:0; cursor:pointer; }
+    .btn-primary { background:#10b981; color:#fff; }
+    .btn-link { background:transparent; color:#0f7a34; border:1px solid rgba(15,122,52,0.06); }
+    .actions { display:flex; gap:8px; justify-content:space-between; align-items:center; }
+    .notice { font-size:14px; color:#374151; margin-bottom:12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Verify your sign-in</h2>
+    <p class="notice" id="notice">A verification code was sent to your email. Enter it below to continue.</p>
+    <input id="codeInput" type="text" placeholder="Enter 6-digit code" maxlength="6" inputmode="numeric" />
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#374151;">
+        <input id="rememberDeviceChk" type="checkbox" style="width:16px;height:16px;" />
+        <span>Remember this device</span>
+      </label>
+    </div>
+    <div class="actions">
+      <button id="verifyBtn" class="btn btn-primary">Verify</button>
+      <button id="resendBtn" class="btn btn-link">Resend</button>
+    </div>
+    <div style="margin-top:12px;text-align:right;"><button id="signoutBtn" class="btn">Sign out</button></div>
+  </div>
+
+  <script type="module">
+    import { auth, onAuthStateChanged, verify2FACode, resend2FACode, signOut, rememberCurrentDevice } from './admin_main.js';
+
+    const notice = document.getElementById('notice');
+    const codeInput = document.getElementById('codeInput');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const resendBtn = document.getElementById('resendBtn');
+    const signoutBtn = document.getElementById('signoutBtn');
+
+    let currentEmail = '';
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      currentEmail = user.email || '';
+      notice.textContent = `We sent a 6-digit verification code to ${currentEmail}. It expires in 5 minutes.`;
+    });
+
+    verifyBtn.addEventListener('click', async () => {
+      const code = (codeInput.value || '').trim();
+      if (!/^[0-9]{6}$/.test(code)) return alert('Enter the 6-digit code');
+      verifyBtn.disabled = true;
+      try {
+        await verify2FACode(code);
+        // If user opted to remember this device, persist a trusted device entry
+        try {
+          const remember = document.getElementById('rememberDeviceChk')?.checked;
+          if (remember) {
+            const days = 30;
+            const user = auth.currentUser;
+            if (user && typeof rememberCurrentDevice === 'function') {
+              await rememberCurrentDevice(user.uid, { days });
+            }
+          }
+        } catch (e) {
+          console.debug('remember device failed', e);
+        }
+        // success -> redirect to dashboard
+        window.location.href = 'admin_dashboard.html';
+      } catch (err) {
+        alert(err.message || 'Verification failed');
+      } finally { verifyBtn.disabled = false; }
+    });
+
+    resendBtn.addEventListener('click', async () => {
+      resendBtn.disabled = true;
+      try {
+        await resend2FACode();
+        alert('A new code was sent (if email sending is configured).');
+      } catch (err) { alert('Unable to resend: ' + (err.message||err)); }
+      resendBtn.disabled = false;
+    });
+
+    signoutBtn.addEventListener('click', async () => {
+      try { await signOut(auth); } catch(e){}
+      window.location.href = 'login.html';
+    });
+
+    // allow Enter to submit
+    codeInput.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter') verifyBtn.click(); });
+  </script>
+</body>
+</html>

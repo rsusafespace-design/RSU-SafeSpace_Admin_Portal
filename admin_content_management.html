@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Content Management</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+        <script>
+            // Prevent browser caching of this page
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', window.location.href);
+            }
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    window.location.reload();
+                }
+            });
+        </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f7fa;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .header-and-sidebar-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            background-color: #1e8e3e;
+            color: white;
+            height: 60px; /* Adjusted height */
+        }
+        
+        .sidebar-top {
+            width: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            height: 60px;
+            transition: width 0.3s ease;
+        }
+        
+        .sidebar-top.collapsed {
+            width: 80px;
+            justify-content: center;
+        }
+        
+        .sidebar-top.collapsed .sidebar-logo {
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+        }
+        
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease, width 0.3s ease;
+        }
+
+        .sidebar-logo img {
+            height: 40px;
+        }
+        
+        .sidebar-logo span {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            white-space: nowrap;
+        }
+        
+        .menu-icon {
+            cursor: pointer;
+            font-size: 24px;
+            margin-left: auto;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+        }
+        
+        .menu-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .menu-icon:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .main-top-bar {
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px; 
+        }
+
+        .main-top-bar .portal-title {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .main-top-bar .user-info {
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+
+        .main-top-bar .user-info .material-icons {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        .main-top-bar .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            color: #1e8e3e; 
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 18px;
+        }
+        /* Local skeleton/shimmer styles for loading animation */
+        .skeleton-line { height: 12px; border-radius: 8px; background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+        .skeleton-circle { width:40px; height:40px; border-radius:50%; background: linear-gradient(90deg, #ececec 25%, #f5f5f5 50%, #ececec 75%); background-size:200% 100%; animation: shimmer 1.2s linear infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Sidebar Styling (from appointment.html) */
+        .sidebar {
+            width: 250px;
+            background: #f0f3f6;
+            border-right: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: calc(100vh - 60px);
+            z-index: 999;
+            overflow: auto;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-menu ul {
+            list-style: none;
+            padding: 12px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        /* Note: The HTML structure uses <button> with inline styles,
+           but the general CSS rules below should still apply for hover/active states
+           if the inline styles are not overriding everything.
+           To ensure the intended look, we'll use the specific selector from the provided HTML/CSS.
+        */
+        .nav-item {
+        color: #1f2937;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 10px;
+        border-radius: 8px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 400;
+        font-size: 15px;
+        transition: background 0.2s, color 0.2s;
+        text-align: left;
+        width: 100%;
+    }
+    
+    .nav-item:hover {
+        background: rgba(15,122,52,0.08) !important;
+        color: #0f7a34 !important;
+        font-weight: 400 !important;
+        border-radius: 8px !important;
+    }
+        
+        .nav-item:hover .icon {
+            color: #1f2937 !important; /* Keep icon color consistent on hover */
+        }
+
+        .nav-item.active {
+            background: rgba(15,122,52,0.12) !important;
+            color: #0f7a34 !important;
+            font-weight: 600 !important;
+        }
+        
+        .nav-item.active .icon {
+            color: #1f2937 !important; /* Keep icon color consistent on active */
+        }
+
+        .nav-item .icon {
+        width: 28px;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        line-height: 1;
+        color: #1f2937;
+        transition: color 0.2s;
+    }
+    
+    .nav-item .label {
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        opacity: 1;
+        transition: opacity 0.2s, transform 0.2s;
+    }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        
+        .sidebar.collapsed .nav-item .label {
+            display: none;
+        }
+        
+        .sidebar.collapsed .nav-item .icon {
+            width: 56px;
+            font-size: 26px;
+            justify-content: center;
+        }
+        
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px 6px;
+            gap: 0;
+        }
+        
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .sidebar.collapsed {
+                width: 280px;
+                transform: translateX(-100%);
+            }
+        }
+        
+        /* Main Content Positioning - make the visible page area fixed so it
+           remains sticky beneath the header/sidebar while internal content scrolls */
+        .main-content {
+            position: fixed;
+            top: 60px; /* header height */
+            left: 250px; /* sidebar width */
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: auto; /* internal scrolling */
+            padding: 30px; /* Added padding to main content */
+            transition: left 0.3s ease;
+            min-height: auto;
+            background: transparent;
+        }
+
+        .main-content.shifted {
+            left: 80px; /* when sidebar collapses */
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                left: 0 !important;
+                padding: 20px 15px;
+            }
+            .main-content.shifted {
+                left: 0;
+            }
+        }
+        
+        /* Existing Content Management Styles (Ensuring they still work) */
+        .content-management-header h2 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+        }
+        
+        .content-columns {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            flex-wrap: wrap; 
+        }
+        @media (max-width: 768px) {
+            .content-columns {
+                flex-direction: column;
+            }
+        }
+
+        .content-left {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .content-right {
+            flex: 1;
+        }
+        .content-left, .content-right {
+            min-width: 300px; 
+        }
+
+        .content-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .content-box h3 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #4a5568;
+            margin-bottom: 20px;
+        }
+        .content-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .content-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f4f8;
+        }
+        .content-list li:last-child {
+            border-bottom: none;
+        }
+        .content-item-text {
+            color: #2d3748;
+        }
+        .content-item-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .content-item-actions a {
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .edit-link {
+            color: #48bb78;
+        }
+        .delete-link {
+            color: #e53e3e;
+        }
+        .add-new-btn {
+            background-color: #E0DD4A;
+            color: #333;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .add-new-btn:hover {
+            background-color: #c6c200;
+        }
+
+        /* Uploader layout: dashed (broken) border area and upload button on the right */
+        .uploader-box { border-radius: 12px; padding: 18px; background: #fff; border: 1px solid #e6eef9; box-shadow: 0 8px 24px rgba(2,6,23,0.04); }
+        .uploader-row { display:flex; gap:12px; align-items:center; margin-top:12px; }
+        .uploader-file-label { cursor:pointer; padding:1rem 1.25rem; border:2px dashed #a0aec0; border-radius:8px; color:#4a5568; font-weight:600; flex:1 1 auto; min-width:0; text-align:center; background:#fff; }
+    .uploader-file-label:hover { border-color:#4299e1; }
+    /* Drag-over visual state */
+    .uploader-file-label.dragover { border-color:#4299e1; background:#f0f9ff; box-shadow:0 6px 18px rgba(66,153,225,0.06); }
+    .uploader-upload-btn { background:#E0DD4A; color:#252525; border:0; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:700; box-shadow: 0 6px 18px rgba(224,221,74,0.12); flex:0 0 auto; }
+    .uploader-upload-btn:hover { background:#c6c200; }
+    .uploader-upload-btn:disabled { opacity:0.55; cursor:not-allowed; }
+    .uploader-remove-btn { background:transparent; color:#e53e3e; border:1px solid rgba(229,62,62,0.08); padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700; }
+    .uploader-remove-btn:hover { background:rgba(229,62,62,0.06); }
+        .uploader-message { display:block; margin-top:10px; color:#e53e3e; font-weight:600; }
+        /* Select for file type */
+        .uploader-select { padding:8px 10px; border-radius:8px; border:1px solid #e6edf3; background:#fff; color:#111; font-weight:600; min-width:180px; }
+        @media (max-width:720px) { .uploader-select { width:100%; margin-bottom:8px; } }
+            /* Upload confirm modal styles */
+            .upload-modal { display:none; position:fixed; inset:0; background:rgba(2,6,23,0.45); align-items:center; justify-content:center; z-index:3200; }
+            .upload-modal .card { background:#fff; border-radius:12px; padding:18px; max-width:520px; width:94%; box-shadow:0 12px 40px rgba(2,6,23,0.2); }
+            .upload-modal .field { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+            .upload-modal label { font-weight:700; font-size:13px; color:#111; }
+            .upload-modal input[type="text"], .upload-modal select { padding:8px 10px; border-radius:8px; border:1px solid #e6edf3; }
+            .upload-modal .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+            .upload-modal .btn { padding:8px 12px; border-radius:8px; border:0; cursor:pointer; font-weight:700; }
+            .upload-modal .btn.cancel { background:#6c757d; color:#fff; }
+            .upload-modal .btn.confirm { background:#10b981; color:#fff; }
+        /* File action buttons in table */
+        .file-action-btn { padding:6px 10px; border-radius:6px; border:0; font-weight:600; cursor:pointer; font-size:13px; margin-left:6px; }
+        .file-action-download { background:transparent; color:#0f7a34; border:1px solid rgba(15,122,52,0.12); padding:6px 10px; }
+        .file-action-download:hover { background:rgba(15,122,52,0.06); }
+        .file-action-delete { background:#e53e3e; color:#fff; border:0; padding:6px 10px; }
+        .file-action-delete:hover { background:#c53030; }
+        @media (max-width:720px) { .uploader-row { flex-direction:column; align-items:stretch; } .uploader-upload-btn { width:100%; } .uploader-file-label { text-align:left; } }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px;
+        }
+        /* Footer button styling: keep icon visible, hide label when collapsed */
+        .sidebar-footer .nav-item { display:flex; align-items:center; gap:12px; padding:10px; border-radius:8px; }
+        .sidebar-footer .nav-item .label { transition: opacity 0.15s ease; }
+        .sidebar.collapsed .sidebar-footer .nav-item .label { display:none; }
+        /* Ensure footer stays above overlay and doesn't block menu icon */
+        .sidebar-footer { z-index: 1000; }
+        
+    /* Profile dropdown styles (shared across pages) */
+    .profile-dropdown .profile-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 12px 34px rgba(2,6,23,0.12), 0 4px 10px rgba(2,6,23,0.06);
+      overflow: hidden;
+      animation: fadeIn .12s ease;
+      transition: transform .14s ease, box-shadow .14s ease, opacity .12s ease;
+      transform-origin: top right;
+    }
+    .profile-card-top { display:flex; justify-content:center; padding:14px 12px 6px; }
+    .avatar-large {
+      width: 120px; height:120px; border-radius:500%; background:#f3faf5; display:flex; align-items:left; justify-content:left; font-weight:7000; font-size:32px; position:relative; overflow:hidden; border:4px solid rgba(16,185,129,0.06);
+    }
+    .avatar-large img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .18s ease; box-shadow: 0 6px 18px rgba(2,6,23,0.08); }
+    .avatar-large:hover img { transform: scale(1.02); }
+    .avatar-camera { position:absolute; right:6px; bottom:6px; border-radius:50%; background:#fff; border:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 12px rgba(2,6,23,0.06); cursor:pointer; font-size:13px; }
+    .profile-card-body { padding: 10px 18px 16px; text-align:center; display:flex; flex-direction:column; gap:8px; }
+    .profile-email { font-size:13px; color:#6b7280; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .profile-greeting { font-weight:700; font-size:18px; margin-top:4px; color:#111827; }
+    .manage-btn { display:inline-block; width:100%; padding:10px 12px; border-radius:999px; border:1px solid rgba(16,185,129,0.12); background:#10b981; color:#fff; font-weight:700; box-shadow:none; cursor:pointer; }
+    .manage-btn:hover { transform:none; filter:brightness(.98); }
+    .profile-divider { height:1px; background:#f1f5f9; margin:8px 0; }
+    .profile-actions { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .profile-link { flex:1; text-align:left; border:0; background:transparent; padding:8px; color:#374151; font-weight:600; cursor:pointer; }
+    .signout-link { flex:1; text-align:right; border:0; background:transparent; padding:8px; color:#ef4444; font-weight:700; cursor:pointer; }
+    @media (max-width:420px) { .profile-dropdown { right:8px !important; left:8px !important; min-width:auto; } }
+    .profile-dropdown[aria-hidden="false"] .profile-card { transform: translateY(-6px); box-shadow: 0 20px 54px rgba(2,6,23,0.16), 0 6px 18px rgba(2,6,23,0.06); }
+
+    .icon-btn { background: transparent !important; border: 0 !important; outline: none !important; box-shadow: none !important; padding: 6px; display: inline-flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+    .icon-btn:focus, .icon-btn:active {
+        outline: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* popover / dropdown visibility controlled by attributes */
+    .popover { display: none; }
+    .popover[data-open="true"] { display: block; }
+    .dropdown { display: none; }
+    .dropdown[aria-hidden="false"] { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Make sidebar logout text/icon red on hover/focus and keyboard focus
+       - add smooth transition, use :focus-visible for keyboard focus, and show pointer */
+    #sidebarLogoutBtn { cursor: pointer; }
+    #sidebarLogoutBtn .label, #sidebarLogoutBtn .icon {
+        color: inherit;
+        transition: color 160ms ease-in-out, transform 120ms ease;
+    }
+    /* Hover and focus (mouse) */
+    #sidebarLogoutBtn:hover .label,
+    #sidebarLogoutBtn:hover .icon {
+        color: #ef4444 !important; /* red text/icon on hover */
+    }
+    /* Keyboard focus visible for accessibility */
+    #sidebarLogoutBtn:focus-visible .label,
+    #sidebarLogoutBtn:focus-visible .icon {
+        color: #ef4444 !important; /* red text/icon on keyboard focus */
+    }
+    </style>
+</head>
+<body>
+    <div class="header-and-sidebar-top">
+        <aside class="sidebar-top" id="sidebarTop">
+            <div class="sidebar-logo">
+                <img src="safespace.png" alt="SafeSpace Logo">
+                <span>SafeSpace</span>
+            </div>
+            <i class="material-icons menu-icon" id="menuIcon">menu</i>
+        </aside>
+        <header class="main-top-bar">
+            <h1 class="portal-title">Admin Portal</h1>
+            <div class="user-info">
+                <div class="top-greeting" aria-live="polite" style="margin-right:12px; text-align:right; color:#fff; margin-left:8px;">
+                    <div id="topGreetingName" style="font-weight:700; font-size:14px;">Good Morning, Admin</div>
+                                                        <div id="topGreetingTime" style="font-size:12px; opacity:0.95; margin-top:2px;">Tuesday, Oct 14, 2025 — 02:51 AM</div>
+                                                    </div>
+                                                                        <div style="position:relative;display:inline-block;">
+                                                                                <button id="notifBtn" class="icon-btn" aria-expanded="false" title="Notifications" style="color:white;">
+                                                                                    <i class="material-icons">notifications</i>
+                                                                                </button>
+                                                                                <div id="notifPanel" class="popover" data-open="false" style="position:fixed;right:20px;top:62px;min-width:280px;z-index:4500;display:none;">
+                                                                                    <div class="notif-card" role="dialog" aria-label="Notifications" aria-hidden="true" style="border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(2,6,23,0.08);background:#fff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-width:280px;">
+                                                                                        <div class="notif-header popover-header" style="background:#10b981;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+                                                                                            <div class="notif-title" style="font-weight:700;font-size:15px;">Notifications</div>
+                                                                                            <div id="notifTimestamp" class="notif-timestamp" style="font-size:12px;opacity:0.95;">--</div>
+                                                                                        </div>
+                                                                                        <div id="notifList" class="popover-body" style="color:#111827;padding:8px 12px;">
+                                                                                            <div class="popover-empty">No new notifications.</div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                        </div>
+                                                                        <div style="position:relative;display:inline-block;margin-left:-8px;">
+                                                                                <button id="profileBtn" class="user-avatar" aria-haspopup="true" aria-expanded="false" title="Profile" style="border:0;cursor:pointer;padding:0;position:relative;overflow:hidden;">
+                                                                                    <div id="profileBtnSpinner" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none">
+                                                                                        <svg width="28" height="28" viewBox="0 0 50 50" aria-hidden="true">
+                                                                                            <circle cx="25" cy="25" r="18" fill="#ffffff" opacity="0.2"></circle>
+                                                                                            <path fill="#10B981" d="M25 5a20 20 0 0 1 0 6a14 14 0 1 0 0 28 14 14 0 0 1 0-34">
+                                                                                                <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                                                                                            </path>
+                                                                                        </svg>
+                                                                                    </div>
+                                                                                    <div id="profileBtnDefaultIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+                                                                                        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                                            <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="#9CA3AF"></path>
+                                                                                            <path d="M3 20c0-2.761 4.477-5 9-5s9 2.239 9 5v1H3v-1z" fill="#9CA3AF"></path>
+                                                                                        </svg>
+                                                                                    </div>
+                                                                                </button>
+                                                                                <div id="profileDropdown" class="dropdown profile-dropdown" aria-hidden="true" style="position:fixed;right:20px;top:62px;min-width:320px;z-index:3000;">
+                                                                                    <div style="background:#fff;border-radius:12px;padding:10px;min-width:320px;box-shadow:0 12px 30px rgba(2,6,23,0.12);font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;">
+                                                                                        <div style="display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                                                                                            <div class="avatar-large" id="profileAvatar" style="width:80px;height:80px;border-radius:60px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;font-size:18px">
+                                                                                                <!-- profile image or initial inserted by script -->
+                                                                                            </div>
+                                                                                            <div style="flex:1;min-width:0">
+                                                                                                <div id="profileGreeting" style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hi, Admin</div>
+                                                                                                <div id="profileEmail" style="font-size:13px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">you@example.com</div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div style="padding:8px 6px;display:flex;flex-direction:column;gap:6px">
+                                                                                            <a id="accountEdit" class="profile-item" href="admin_profile.html" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit">
+                                                                                                <i class="material-icons icon" style="font-size:18px;line-height:1;">person</i>
+                                                                                                <span style="flex:1;text-align:left">Manage your profile</span>
+                                                                                            </a>
+                                                                                            <button id="accountSettings" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                                                                                                <i class="material-icons icon" style="font-size:18px;line-height:1;">settings</i>
+                                                                                                <span style="flex:1;text-align:left">Settings & privacy</span>
+                                                                                                <i class="material-icons icon" style="font-size:16px;opacity:0.7;">chevron_right</i>
+                                                                                            </button>
+                                                                                            <button id="accountLogout" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px;color:#111;font-weight:600">
+                                                                                                <i class="material-icons icon" style="font-size:18px;line-height:1;color:#ef4444">logout</i>
+                                                                                                <span style="flex:1;text-align:left">Log Out</span>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                        </div>
+                                                </div>
+        </header>
+    </div>
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <nav class="nav-menu">
+                <nav class="nav" id="nav" style="display:flex;flex-direction:column;gap:8px;padding:12px;">
+                    <button class="nav-item" onclick="location.href='admin_dashboard.html'" data-name="Dashboard">
+                        <span class="material-icons icon" style="font-size:26px;">dashboard</span>
+                        <span class="label" style="font-size:15px;">Home</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_user_management.html'" data-name="User Management">
+                        <span class="material-icons icon" style="font-size:26px;">groups</span>
+                        <span class="label" style="font-size:15px;">Student Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_counselor_management.html'" data-name="Counselor Management">
+                        <span class="material-icons icon" style="font-size:26px;">psychology</span>
+                        <span class="label" style="font-size:15px;">Counselor Management</span>
+                    </button>
+                    <button class="nav-item active" onclick="location.href='admin_content_management.html'" data-name="Content Management">
+                        <span class="material-icons icon" style="font-size:26px;">description</span>
+                        <span class="label" style="font-size:15px;">Content Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_report_management.html'" data-name="Reports Management">
+                        <span class="material-icons icon" style="font-size:26px;">warning</span>
+                        <span class="label">Reports Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_session_report.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">fact_check</span>
+                        <span class="label">Session Reports</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_psych_test.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">assessment</span>
+                        <span class="label">Psychological Test</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_settings.html'" data-name="System Settings">
+                        <span class="material-icons icon" style="font-size:26px;">settings</span>
+                        <span class="label" style="font-size:15px;">System Settings</span>
+                    </button>
+                </nav>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="nav-item" id="sidebarLogoutBtn" type="button" title="Sign out">
+                    <i class="material-icons icon" style="font-size:26px;">logout</i>
+                    <span class="label" style="font-size:15px;">Logout</span>
+                </button>
+            </div>
+        </aside>
+        <main class="main-content" id="mainContent">
+            <div class="content-management-wrapper">
+                <h2 class="content-management-header">Content Management</h2>
+                <div class="content-columns">
+                    <div class="content-left">
+                        <div class="content-box uploader-box">
+                            <h3>Upload a New File</h3>
+                            <!-- keep the input accessible but positioned off-screen so label works reliably -->
+                            <input type="file" id="fileInput" style="position:absolute;left:-9999px;" onchange="updateFileName()">
+                            <div class="uploader-row">
+                                <!-- removed external file type select; selection happens inside the upload modal -->
+                                <!-- removed `for` to avoid native double-click behavior; add role/tabindex for keyboard access -->
+                                <label id="fileLabel" class="uploader-file-label" role="button" tabindex="0">📁 Click to browse or drag & drop files</label>
+                                <button id="addLinkButton" class="uploader-remove-btn" style="background:#fff;color:#0f7a34;border:1px solid rgba(15,122,52,0.08);">Add Link</button>
+                                <button id="removeButton" class="uploader-remove-btn" style="display:none;">Remove</button>
+                                <button id="uploadButton" class="uploader-upload-btn" disabled>Upload File</button>
+                            </div>
+                            <span id="messageBox" class="uploader-message"></span>
+                        </div>
+
+                        <div class="content-box" style="margin-top:18px;">
+                            <h3>Files</h3>
+                            <!-- header skeleton removed per user request -->
+                            <input type="text" id="searchInput" placeholder="Filter files by filename..." style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #e6edf3; border-radius:6px;">
+                            <div style="max-height:520px; overflow:auto; display: flex; flex-direction: column;">
+                                <table style="width:100%; border-collapse:collapse;">
+                                    <thead style="background:#f8fafc; font-weight:700;">
+                                        <tr>
+                                            <th style="text-align:left; padding:8px;">Filename</th>
+                                            <th style="text-align:left; padding:8px; width:160px;">Type</th>
+                                            <th style="text-align:left; padding:8px; width:90px;">Size</th>
+                                            <th style="text-align:left; padding:8px; width:140px;">Date Uploaded</th>
+                                            <th style="text-align:right; padding:8px; width:120px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fileTableBody"></tbody>
+                                </table>
+                                <p id="emptyState" class="text-center" style="padding:24px;color:#6b7280;">No files have been uploaded yet.</p>
+                            </div>
+                            <!-- Delete confirmation modal (styled similarly to logout modal) -->
+                            <div id="deleteConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3000">
+                                <div style="background:#fff;border-radius:12px;padding:18px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+                                    <h3 style="margin:0 0 8px 0;font-size:16px;font-weight:700">Delete file?</h3>
+                                    <div style="font-size:15px;margin-bottom:12px;color:#111">Are you sure you want to permanently delete <strong class="delete-filename" style="color:#111"></strong>?</div>
+                                    <div style="display:flex;gap:8px;justify-content:flex-end">
+                                        <button id="deleteConfirmCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                                        <button id="deleteConfirmOk" style="background:#e53e3e;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Upload confirmation modal: edit filename and type before upload -->
+                            <div id="uploadConfirmModal" class="upload-modal" aria-hidden="true">
+                                <div class="card" role="dialog" aria-modal="true" aria-labelledby="uploadConfirmTitle">
+                                    <h3 id="uploadConfirmTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm upload</h3>
+                                    <div style="font-size:14px;margin-bottom:12px;color:#111">Review and edit the filename and type before uploading.</div>
+                                    <div class="field">
+                                        <label for="uploadFileName">Filename</label>
+                                        <div style="display:flex;gap:8px;align-items:center;">
+                                            <input id="uploadFileName" type="text" style="flex:1;" />
+                                            <span id="uploadFileExt" style="font-weight:700;color:#6b7280;padding:8px 10px;background:#f7fafc;border-radius:8px;border:1px solid #e6edf3;min-width:60px;text-align:center"></span>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label for="uploadFileType">Type</label>
+                                        <select id="uploadFileType">
+                                            <option value="Featured Resources">Featured Resources</option>
+                                            <option value="Forms and Documents">Forms and Documents</option>
+                                        </select>
+                                    </div>
+                                    <div class="actions">
+                                        <button id="uploadCancelBtn" class="btn cancel">Cancel</button>
+                                        <button id="uploadConfirmBtn" class="btn confirm">Upload</button>
+                                    </div>
+                                </div>
+                            </div>
+                                <!-- External link modal: add a URL (YouTube, mp3 link, etc.) and metadata -->
+                                <div id="linkModal" class="upload-modal" aria-hidden="true" style="display:none;">
+                                    <div class="card" role="dialog" aria-modal="true" aria-labelledby="linkModalTitle">
+                                        <h3 id="linkModalTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Add external link</h3>
+                                        <div style="font-size:14px;margin-bottom:12px;color:#111">Provide a URL to a video or audio (YouTube, MP3, etc.).</div>
+                                        <div class="field">
+                                            <label for="linkUrl">URL</label>
+                                            <input id="linkUrl" type="text" placeholder="https://..." />
+                                        </div>
+                                        <div class="field">
+                                            <label for="linkFileName">Filename</label>
+                                            <input id="linkFileName" type="text" placeholder="Optional display name (e.g. 'Relaxing Music')" />
+                                        </div>
+                                        <div class="field">
+                                            <label for="linkFileType">Type</label>
+                                            <select id="linkFileType">
+                                                <option value="Featured Resources">Featured Resources</option>
+                                                <option value="Forms and Documents">Forms and Documents</option>
+                                                <option value="External Media">External Media</option>
+                                            </select>
+                                        </div>
+                                        <div class="actions">
+                                            <button id="linkCancelBtn" class="btn cancel">Cancel</button>
+                                            <button id="linkConfirmBtn" class="btn confirm">Add Link</button>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        // Content management uploader script (uses existing Firebase app)
+        import { app, createNotification } from './admin_main.js';
+        import { getDatabase, ref, push, onValue, remove, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js';
+
+        const db = getDatabase(app);
+
+        // Local activity logger (writes to shared key used by admin dashboard)
+        (function registerLocalActivityHelper(){
+            const KEY = 'admin_recent_activity';
+            const MAX = 20;
+            function pushLocalActivity(text, icon) {
+                try {
+                    const entry = { text: String(text || ''), ts: (new Date()).toISOString(), icon: icon || '' };
+                    const raw = localStorage.getItem(KEY);
+                    let arr = [];
+                    try { arr = raw ? JSON.parse(raw) : []; } catch(e){ arr = []; }
+                    arr.unshift(entry);
+                    if (arr.length > MAX) arr = arr.slice(0, MAX);
+                    localStorage.setItem(KEY, JSON.stringify(arr));
+                } catch (e) { console.warn('pushLocalActivity failed', e); }
+            }
+            try { window.pushLocalActivity = pushLocalActivity; } catch(e){}
+        })();
+
+        const fileInput = document.getElementById('fileInput');
+        const fileLabel = document.getElementById('fileLabel');
+        const uploadButton = document.getElementById('uploadButton');
+        const messageBox = document.getElementById('messageBox');
+    const fileTableBody = document.getElementById('fileTableBody');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+    const uploadConfirmModal = document.getElementById('uploadConfirmModal');
+    const uploadFileName = document.getElementById('uploadFileName');
+    const uploadFileExt = document.getElementById('uploadFileExt');
+    const uploadFileType = document.getElementById('uploadFileType');
+    const uploadCancelBtn = document.getElementById('uploadCancelBtn');
+    const uploadConfirmBtn = document.getElementById('uploadConfirmBtn');
+    const removeButton = document.getElementById('removeButton');
+    const addLinkButton = document.getElementById('addLinkButton');
+    const linkModal = document.getElementById('linkModal');
+    const linkUrlInput = document.getElementById('linkUrl');
+    const linkFileName = document.getElementById('linkFileName');
+    const linkFileType = document.getElementById('linkFileType');
+    const linkCancelBtn = document.getElementById('linkCancelBtn');
+    const linkConfirmBtn = document.getElementById('linkConfirmBtn');
+
+        const filesRef = ref(db, 'files');
+    const conversionRef = ref(db, 'conversionRequests');
+
+    // --- Loading skeleton helpers ---
+    function showFilesSkeleton(rows = 6) {
+        if (!fileTableBody) return;
+        const cols = 5; // columns in the files table
+        const skeletonRows = Array.from({length: rows}).map(()=>{
+            return `
+                <tr>
+                    <td style="padding:8px;"><div class="skeleton-line" style="width:70%;height:14px;border-radius:8px"></div></td>
+                    <td style="padding:8px;width:160px;"><div class="skeleton-line" style="width:60%;height:14px;border-radius:8px"></div></td>
+                    <td style="padding:8px;width:90px;"><div class="skeleton-line" style="width:50%;height:14px;border-radius:8px"></div></td>
+                    <td style="padding:8px;width:140px;"><div class="skeleton-line" style="width:40%;height:14px;border-radius:8px"></div></td>
+                    <td style="padding:8px;width:120px;text-align:right;"><div class="skeleton-line" style="width:60%;height:14px;border-radius:8px;margin-left:auto"></div></td>
+                </tr>
+            `;
+        }).join('');
+        fileTableBody.innerHTML = skeletonRows;
+        if (document.getElementById('headerSkeleton')) document.getElementById('headerSkeleton').style.display = '';
+        if (emptyState) emptyState.style.display = 'none';
+    }
+
+    function hideFilesSkeleton() {
+        if (document.getElementById('headerSkeleton')) document.getElementById('headerSkeleton').style.display = 'none';
+    }
+
+    // show skeleton immediately while we wait for DB
+    showFilesSkeleton(6);
+
+        // Timed message helper: shows a message in messageBox and clears after timeoutMs (if provided)
+        let _messageTimeout = null;
+        function showMessage(text, timeoutMs) {
+            if (!messageBox) return;
+            messageBox.textContent = text;
+            if (_messageTimeout) { clearTimeout(_messageTimeout); _messageTimeout = null; }
+            if (timeoutMs && timeoutMs > 0) {
+                _messageTimeout = setTimeout(() => { if (messageBox) messageBox.textContent = ''; _messageTimeout = null; }, timeoutMs);
+            }
+        }
+
+        // Fallback + Drag-and-Drop: clicking the label opens the file dialog and dropping files selects them
+        try {
+            if (fileLabel && fileInput) {
+                // Click opens file picker
+                fileLabel.addEventListener('click', (e) => {
+                    try { fileInput.click(); } catch (err) { /* ignore */ }
+                });
+                // Keyboard support: Enter or Space should open file picker when label is focused
+                fileLabel.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        try { fileInput.click(); } catch (err) { /* ignore */ }
+                    }
+                });
+
+                // DRAG & DROP handlers
+                fileLabel.addEventListener('dragenter', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    fileLabel.classList.add('dragover');
+                });
+                fileLabel.addEventListener('dragover', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    try { if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; } catch(e){}
+                    fileLabel.classList.add('dragover');
+                });
+                fileLabel.addEventListener('dragleave', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    fileLabel.classList.remove('dragover');
+                });
+                fileLabel.addEventListener('drop', (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    fileLabel.classList.remove('dragover');
+                    const dtFiles = e.dataTransfer && e.dataTransfer.files;
+                    if (dtFiles && dtFiles.length > 0) {
+                        const file = dtFiles[0];
+                        // Try populate the hidden input so existing logic works
+                        try {
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            fileInput.files = dataTransfer.files;
+                            // clear any fallback property
+                            try { delete fileInput._droppedFile; } catch(e){}
+                        } catch (ex) {
+                            // Fallback: some environments may not allow assigning to input.files
+                            fileInput._droppedFile = file;
+                        }
+                        updateFileName();
+                    }
+                });
+            }
+        } catch (err) { console.warn('Label click / drag-and-drop setup failed', err); }
+
+        let allFilesData = [];
+
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (e) => reject(e);
+        });
+
+        // Remove any embedded data type info from filenames used in the editable modal
+        function sanitizeFilename(name) {
+            if (!name) return '';
+            try {
+                name = String(name);
+            } catch (e) { return '' }
+            // If someone accidentally passed a data URL, avoid huge content
+            if (name.startsWith('data:')) return '';
+            // Remove parenthetical MIME like "file.pdf (application/pdf)"
+            const pIdx = name.indexOf(' (');
+            if (pIdx > -1) name = name.slice(0, pIdx);
+            // Remove trailing separators like ' - ' or ' | '
+            const dashIdx = name.indexOf(' - ');
+            if (dashIdx > -1) name = name.slice(0, dashIdx);
+            const pipeIdx = name.indexOf(' | ');
+            if (pipeIdx > -1) name = name.slice(0, pipeIdx);
+            return name.trim();
+        }
+
+        const extractMimeType = (dataUrl) => {
+            const m = dataUrl.match(/^data:([^;]+);base64,/); return m?m[1]:'application/octet-stream';
+        };
+        const extractPayload = (dataUrl) => dataUrl.split(',')[1];
+
+        const formatSize = (bytes) => {
+            if (!bytes) return '0 Bytes';
+            const k = 1024; const sizes = ['Bytes','KB','MB','GB'];
+            const i = Math.floor(Math.log(bytes)/Math.log(k));
+            return parseFloat((bytes/Math.pow(k,i)).toFixed(2)) + ' ' + sizes[i];
+        };
+
+        window.updateFileName = () => {
+            if (!fileInput) return;
+            const hasFiles = fileInput.files && fileInput.files.length>0;
+            const dropped = fileInput._droppedFile;
+            if (hasFiles || dropped) {
+                const name = hasFiles ? fileInput.files[0].name : dropped.name;
+                if (fileLabel) fileLabel.textContent = name;
+                if (uploadButton) uploadButton.disabled = false;
+                if (removeButton) removeButton.style.display = '';
+                if (messageBox) messageBox.textContent = '';
+            } else {
+                if (fileLabel) fileLabel.textContent = '📁 Click to browse or drag & drop files';
+                if (uploadButton) uploadButton.disabled = true;
+                if (removeButton) removeButton.style.display = 'none';
+            }
+        };
+
+        // Helper to perform the actual upload
+        async function performUpload(file, filename, category) {
+            if (!file) { if(messageBox) messageBox.textContent='No file to upload.'; return; }
+            const maxSize = 10*1024*1024; if (file.size>maxSize){ if(messageBox) messageBox.textContent='File is too large. Max size is 10MB.'; return; }
+            if(messageBox) messageBox.textContent='Uploading...';
+            if (uploadConfirmBtn) uploadConfirmBtn.disabled = true;
+            try{
+                const dataUrl = await fileToBase64(file);
+                const payload = { filename: filename || file.name, size: file.size, mimeType: extractMimeType(dataUrl), uploadDate: serverTimestamp(), data: extractPayload(dataUrl), category: category || 'Uncategorized' };
+                await push(filesRef, payload);
+                if(messageBox) showMessage('Upload successful!', 5000);
+                try { if (window.pushLocalActivity) window.pushLocalActivity(`Uploaded file ${filename || file.name} (${category || 'Uncategorized'})`, '📤'); } catch(e) { console.warn('pushLocalActivity', e); }
+                try { /* Notifications suppressed on this page: file upload */ } catch(e) { }
+                // clear inputs
+                fileInput.value=''; updateFileName();
+                try { delete fileInput._droppedFile; } catch(e){}
+                }catch(err){ console.error('Upload error',err); if(messageBox) messageBox.textContent = 'Upload failed.'; }
+            finally{ if (uploadConfirmBtn) uploadConfirmBtn.disabled = false; hideUploadModal(); }
+        }
+
+        // Save an external link entry to the database (YouTube, mp3 link, etc.)
+        async function performExternalUpload(url, filename, category) {
+            if (!url || typeof url !== 'string') { if (messageBox) messageBox.textContent = 'Please provide a valid URL.'; return; }
+            if (messageBox) messageBox.textContent = 'Adding link...';
+            try {
+                const payload = { filename: filename || url, size: 0, mimeType: 'text/url', uploadDate: serverTimestamp(), url: url, category: category || 'External Media', isExternal: true };
+                await push(filesRef, payload);
+                if (messageBox) showMessage('Link added successfully!', 5000);
+                try { if (window.pushLocalActivity) window.pushLocalActivity(`Added external link ${filename || url}`, '🔗'); } catch(e) { console.warn('pushLocalActivity', e); }
+                try { /* Notifications suppressed on this page: link added */ } catch(e) { }
+                // clear inputs
+                if (linkUrlInput) linkUrlInput.value = '';
+                if (linkFileName) linkFileName.value = '';
+            } catch (err) {
+                console.error('External upload error', err);
+                if (messageBox) messageBox.textContent = 'Failed to add link.';
+            } finally {
+                hideLinkModal();
+            }
+        }
+
+        // Show the upload confirm modal, prefill filename and type
+        function showUploadModal() {
+            const hasFile = fileInput && fileInput.files && fileInput.files.length>0;
+            const dropped = fileInput && fileInput._droppedFile;
+            if (!hasFile && !dropped) { if(messageBox) messageBox.textContent='Please select a file first.'; return; }
+            const file = hasFile ? fileInput.files[0] : dropped;
+            // split base name and extension so user edits only the name
+            const originalName = file && file.name ? String(file.name) : '';
+            let ext = '';
+            let base = originalName;
+            const lastDot = originalName.lastIndexOf('.');
+            if (lastDot > 0) {
+                base = originalName.slice(0, lastDot);
+                ext = originalName.slice(lastDot); // includes the dot
+            }
+            if (uploadFileName) uploadFileName.value = sanitizeFilename(base || '');
+            if (uploadFileExt) uploadFileExt.textContent = ext || '';
+            if (uploadFileType) uploadFileType.value = 'Featured Resources';
+            if (uploadConfirmModal) { uploadConfirmModal.style.display = 'flex'; uploadConfirmModal.setAttribute('aria-hidden','false'); uploadFileName && uploadFileName.focus(); }
+        }
+
+        function hideUploadModal() { if (uploadConfirmModal) { uploadConfirmModal.style.display='none'; uploadConfirmModal.setAttribute('aria-hidden','true'); } }
+
+        if (uploadButton) {
+            uploadButton.addEventListener('click', (e) => { e.preventDefault(); showUploadModal(); });
+        }
+
+        // Link modal handlers
+        function showLinkModal() {
+            if (linkModal) { linkModal.style.display = 'flex'; linkModal.setAttribute('aria-hidden','false'); if (linkUrlInput) linkUrlInput.focus(); }
+        }
+        function hideLinkModal() { if (linkModal) { linkModal.style.display = 'none'; linkModal.setAttribute('aria-hidden','true'); } }
+
+        if (addLinkButton) {
+            addLinkButton.addEventListener('click', (e) => { e.preventDefault(); showLinkModal(); });
+        }
+        if (linkCancelBtn) linkCancelBtn.addEventListener('click', (e) => { e.preventDefault(); hideLinkModal(); });
+        if (linkConfirmBtn) linkConfirmBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const url = linkUrlInput && linkUrlInput.value ? linkUrlInput.value.trim() : '';
+            const name = linkFileName && linkFileName.value ? linkFileName.value.trim() : '';
+            const category = linkFileType && linkFileType.value ? linkFileType.value : 'External Media';
+            // Basic validation
+            if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+                if (messageBox) messageBox.textContent = 'Please enter a valid URL starting with http:// or https://';
+                return;
+            }
+            performExternalUpload(url, name || url, category);
+        });
+
+        // Modal button handlers
+        if (uploadCancelBtn) uploadCancelBtn.addEventListener('click', (e) => { e.preventDefault(); hideUploadModal(); });
+        if (uploadConfirmBtn) uploadConfirmBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const hasFile = fileInput && fileInput.files && fileInput.files.length>0;
+            const file = hasFile ? fileInput.files[0] : fileInput._droppedFile;
+            const base = uploadFileName && uploadFileName.value ? uploadFileName.value.trim() : (file && file.name) || 'unnamed';
+            const ext = uploadFileExt && uploadFileExt.textContent ? uploadFileExt.textContent : '';
+            const filename = base + (ext || '');
+            const category = uploadFileType && uploadFileType.value ? uploadFileType.value : 'Uncategorized';
+            performUpload(file, filename, category);
+        });
+        // Remove selected file handler
+        if (removeButton) {
+            removeButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Clear the native input
+                try { fileInput.value = ''; } catch(e){}
+                // Clear fallback dropped file
+                try { delete fileInput._droppedFile; } catch(e){}
+                // Reset UI
+                updateFileName();
+                if (messageBox) messageBox.textContent = '';
+            });
+        }
+
+        window.downloadFile = (fileKey, filename, mimeType, base64Payload) => {
+            try{ const dataUrl = `data:${mimeType};base64,${base64Payload}`; const a=document.createElement('a'); a.href=dataUrl; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); }
+            catch(e){ console.error('Download error',e); if(messageBox) messageBox.textContent='Download failed.'; }
+        };
+
+        // Create a conversion request for mp4 -> mp3 (backend/Cloud Function should process these)
+        async function requestConversion(fileKey, fileObj) {
+            // If caller passed only fileKey, try to resolve fileObj from locally cached allFilesData
+            if (!fileObj && fileKey) {
+                fileObj = allFilesData.find(f => f.key === fileKey) || null;
+            }
+            if (!fileObj) { if (messageBox) messageBox.textContent = 'No file information available.'; return; }
+            // Determine source: stored data vs external URL
+            const isMp4Local = (fileObj.mimeType && fileObj.mimeType.toLowerCase().includes('video/mp4')) || (fileObj.filename && fileObj.filename.toLowerCase().endsWith('.mp4'));
+            const isMp4Url = (fileObj.url && /\.mp4(\?|$)/i.test(fileObj.url));
+            if (!isMp4Local && !isMp4Url) { if (messageBox) messageBox.textContent = 'Conversion is only available for MP4 videos.'; return; }
+            if (messageBox) messageBox.textContent = 'Requesting conversion...';
+            try {
+                const payload = {
+                    fileKey: fileKey || null,
+                    filename: fileObj.filename || (fileObj.url || ''),
+                    url: fileObj.url || null,
+                    mimeType: fileObj.mimeType || null,
+                    size: fileObj.size || 0,
+                    status: 'pending',
+                    requestedAt: serverTimestamp(),
+                    requestedBy: 'admin'
+                };
+                await push(conversionRef, payload);
+                if (messageBox) showMessage('Conversion requested — backend worker will process it.', 6000);
+                try { /* Notifications suppressed on this page: conversion requested */ } catch(e) { }
+            } catch (err) {
+                console.error('Conversion request failed', err);
+                if (messageBox) messageBox.textContent = 'Failed to request conversion.';
+            }
+        }
+        window.requestConversion = requestConversion;
+
+        // Modal-driven deletion flow (replaces native confirm())
+        let pendingDeleteKey = null;
+        let pendingDeleteName = null;
+
+        function showDeleteModal(fileKey, filename) {
+            pendingDeleteKey = fileKey;
+            pendingDeleteName = filename || null;
+            const modal = document.getElementById('deleteConfirmModal');
+            if (!modal) {
+                // fallback to native confirm
+                if (confirm('Are you sure you want to delete this file permanently?')) {
+                    return remove(ref(db, 'files/' + fileKey));
+                }
+                return;
+            }
+            const nameEl = modal.querySelector('.delete-filename');
+            if (nameEl) nameEl.textContent = filename || 'this file';
+            modal.style.display = 'flex';
+        }
+
+        function hideDeleteModal() {
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) modal.style.display = 'none';
+            pendingDeleteKey = null;
+            pendingDeleteName = null;
+        }
+
+        async function confirmDelete() {
+            if (!pendingDeleteKey) { hideDeleteModal(); return; }
+            const okBtn = document.getElementById('deleteConfirmOk');
+            try {
+                if (okBtn) okBtn.disabled = true;
+                await remove(ref(db, 'files/' + pendingDeleteKey));
+                if (messageBox) showMessage('File deleted.', 5000);
+                try { /* Notifications suppressed on this page: file deleted */ } catch(e) { }
+                try { if (window.pushLocalActivity) window.pushLocalActivity(`Deleted file ${pendingDeleteName || pendingDeleteKey}`, '🗑️'); } catch(e) { console.warn('pushLocalActivity', e); }
+            } catch (e) {
+                console.error('Deletion failed', e);
+                if (messageBox) messageBox.textContent = 'Deletion failed.';
+            } finally {
+                if (okBtn) okBtn.disabled = false;
+                hideDeleteModal();
+            }
+        }
+
+    // Small compatibility alias: accept filename too so modal can show it
+    window.deleteFile = (fileKey, filename) => showDeleteModal(fileKey, filename);
+
+        // Delegate modal button clicks
+        document.addEventListener('click', function (e) {
+            if (!e.target) return;
+            if (e.target.id === 'deleteConfirmCancel') { hideDeleteModal(); }
+            if (e.target.id === 'deleteConfirmOk') { confirmDelete(); }
+        });
+
+        function renderFiles() {
+            if (!fileTableBody) return;
+            const q = (searchInput && searchInput.value || '').toLowerCase();
+            const filtered = allFilesData.filter(f=> f.filename && f.filename.toLowerCase().includes(q));
+            fileTableBody.innerHTML = '';
+            if (filtered.length === 0) {
+                if (emptyState) emptyState.style.display = '';
+                return;
+            }
+            if (emptyState) emptyState.style.display = 'none';
+                for (const file of filtered) {
+                    const tr = document.createElement('tr');
+                    const date = file.uploadDate && typeof file.uploadDate === 'number' ? new Date(file.uploadDate).toLocaleString() : (file.uploadDate || 'N/A');
+                    const size = formatSize(file.size);
+                    const fileKey = file.key || '';
+                    const category = (file.category || file.type || 'Uncategorized');
+
+                    // Build action buttons depending on whether entry is external (url) or stored (data)
+                    let actionsHtml = '';
+                    if (file.url) {
+                        const safeUrl = String(file.url).replace(/'/g, "\\'");
+                        actionsHtml = `
+                            <button class="file-action-btn file-action-download" onclick="window.open('${safeUrl}','_blank')" aria-label="Open ${(file.filename||'').replace(/'/g,"\\'")}">Open</button>
+                            <button class="file-action-btn file-action-delete" onclick="deleteFile('${fileKey}','${(file.filename||'').replace(/'/g,"\\'" )}')" aria-label="Delete ${(file.filename||'').replace(/'/g,"\\'")}">Delete</button>
+                        `;
+                    } else {
+                        // stored file (binary data)
+                        const safeFilename = (file.filename||'').replace(/'/g, "\\'");
+                        const safeMime = (file.mimeType||'application/octet-stream').replace(/'/g, "\\'");
+                        const safeData = (file.data||'');
+                        actionsHtml = `
+                            <button class="file-action-btn file-action-download" onclick="downloadFile('${fileKey}','${safeFilename}','${safeMime}','${safeData}')" aria-label="Download ${safeFilename}">Download</button>
+                            <button class="file-action-btn file-action-delete" onclick="deleteFile('${fileKey}','${safeFilename}')" aria-label="Delete ${safeFilename}">Delete</button>
+                        `;
+                    }
+
+                    tr.innerHTML = `
+                        <td style="padding:8px;">${file.filename}</td>
+                        <td style="padding:8px;">${(category||'').replace(/'/g,"\\'")}</td>
+                        <td style="padding:8px;">${size}</td>
+                        <td style="padding:8px;">${date}</td>
+                        <td style="padding:8px; text-align:right;">${actionsHtml}</td>
+                    `;
+                    fileTableBody.appendChild(tr);
+            }
+        }
+
+        onValue(filesRef, (snap) => {
+            const files = snap.val();
+            if (files) {
+                allFilesData = Object.keys(files).map(k => ({ key: k, ...(files[k]||{}) }));
+            } else {
+                allFilesData = [];
+            }
+            renderFiles();
+            // hide skeletons now that real data is rendered
+            hideFilesSkeleton();
+        }, (err) => { console.error('DB error', err); if(messageBox) messageBox.textContent='Database connection error.'; });
+
+        if (searchInput) searchInput.addEventListener('input', renderFiles);
+    </script>
+
+    <script>
+        const menuIcon = document.getElementById('menuIcon');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarTop = document.getElementById('sidebarTop');
+        
+        // Create overlay for mobile
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        
+        // Mobile detection
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Toggle sidebar with mobile responsiveness
+        menuIcon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isMobile()) {
+                // Mobile behavior - overlay sidebar
+                const isOpen = sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active', isOpen);
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            } else {
+                // Desktop behavior - collapse sidebar
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            }
+        });
+        
+        // Close mobile sidebar when clicking overlay
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                // Reset mobile states when switching to desktop
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                // Ensure desktop state is consistent
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            } else {
+                // Reset desktop states when switching to mobile
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+        
+        // Close mobile sidebar when clicking a menu item
+        document.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', () => {
+                if (isMobile()) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+
+        // Initialize state for desktop on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isMobile()) {
+                // Default to uncollapsed on desktop for consistency with appointment.html default
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+
+            // ===============================================
+            //  NEW FUNCTIONALITY ADDED HERE
+            // ===============================================
+
+            // 1. Add New Buttons Functionality
+            document.querySelectorAll('.add-new-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const containerTitle = e.target.closest('.content-box').querySelector('h3').textContent;
+                    alert(`Redirecting to form to add new item for: "${containerTitle}".\n\n(Functionality to be implemented on the backend.)`);
+                });
+            });
+
+            // 2. Edit Links Functionality
+            document.querySelectorAll('.edit-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Stop the link from navigating to '#'
+                    const itemName = e.target.closest('li').querySelector('.content-item-text').textContent;
+                    alert(`Opening Edit Modal/Page for: "${itemName}".\n\n(Functionality to be implemented on the backend.)`);
+                });
+            });
+
+            // 3. Delete Links Functionality
+            document.querySelectorAll('.delete-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Stop the link from navigating to '#'
+                    const listItem = e.target.closest('li');
+                    const itemName = listItem.querySelector('.content-item-text').textContent;
+                    
+                    if (confirm(`Are you sure you want to delete the item: "${itemName}"?`)) {
+                        // Placeholder for actual deletion logic (e.g., API call)
+                        alert(`Item "${itemName}" has been flagged for deletion.\n\n(Functionality to be implemented on the backend.)`);
+                        // Optionally remove the item from the DOM for demonstration
+                        // listItem.remove();
+                    }
+                });
+            });
+        });
+    </script>
+        <script type="module">
+            import { requireAdminAuth } from './admin_main.js';
+            import { loadAdminProfileInto, startGreetingClock } from './admin_profile_loader.js';
+            requireAdminAuth();
+            loadAdminProfileInto({ greetingSelector: '#topGreetingName', avatarSelector: '.main-top-bar .user-avatar', timeSelector: '#topGreetingTime' });
+            startGreetingClock('#topGreetingName', '#topGreetingTime');
+        </script>
+    </script>
+    <script src="./profile_dropdown.js"></script>
+    <!-- Confirm modal for logout (style matches admin_profile confirm modal) -->
+    <div id="confirmModalLogout" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3000">
+        <div style="background:#fff;border-radius:12px;padding:18px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+            <h3 id="confirmModalLogoutTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm</h3>
+            <div id="confirmModalLogoutMessage" style="font-size:15px;margin-bottom:12px;color:#111">Are you sure you want to sign out?</div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button id="confirmModalLogoutCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                <button id="confirmModalLogoutOk" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Confirm</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    (function(){
+        function attachLogout(){
+            const sidebarLogout = document.getElementById('sidebarLogoutBtn');
+            if (!sidebarLogout) return;
+            // avoid duplicate handlers on the same element
+            if (sidebarLogout._logoutHandlerAttached) return;
+            sidebarLogout._logoutHandlerAttached = true;
+
+            // modal elements
+            const confirmModal = document.getElementById('confirmModalLogout');
+            const confirmOk = document.getElementById('confirmModalLogoutOk');
+            const confirmCancel = document.getElementById('confirmModalLogoutCancel');
+
+            function doLogout() {
+                // Prefer existing profile dropdown logout if present
+                const profileLogout = document.getElementById('accountLogout');
+                if (profileLogout) { profileLogout.click(); return; }
+                // Prefer centralized helper if available
+                if (typeof window.signOutAndRedirect === 'function') { window.signOutAndRedirect(); return; }
+                try { localStorage.removeItem('authToken'); } catch(e){}
+                window.location.href = 'login.html';
+            }
+
+            sidebarLogout.addEventListener('click', () => {
+                // If modal isn't available, fallback to native confirm
+                if (!confirmModal || !confirmOk || !confirmCancel) {
+                    if (confirm('Are you sure you want to sign out?')) doLogout();
+                    return;
+                }
+
+                // show modal
+                confirmModal.style.display = 'flex';
+
+                function cleanup() {
+                    confirmModal.style.display = 'none';
+                    confirmOk.removeEventListener('click', onOk);
+                    confirmCancel.removeEventListener('click', onCancel);
+                    document.removeEventListener('keydown', onKeyDown);
+                }
+
+                function onOk() { cleanup(); doLogout(); }
+                function onCancel() { cleanup(); }
+                function onKeyDown(e) {
+                    if (e.key === 'Escape') { cleanup(); }
+                }
+
+                confirmOk.addEventListener('click', onOk);
+                confirmCancel.addEventListener('click', onCancel);
+                document.addEventListener('keydown', onKeyDown);
+            });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachLogout); else attachLogout();
+    })();
+    </script>
+</body>
+</html>

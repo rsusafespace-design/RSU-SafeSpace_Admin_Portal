@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - System Settings</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            // Prevent browser caching of this page
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', window.location.href);
+            }
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    window.location.reload();
+                }
+            });
+        </script>
+        <!-- FAQ Modal (injected) -->
+        <div id="faqModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.6);align-items:center;justify-content:center;z-index:5000"> 
+            <div style="background:#fff;max-width:860px;width:94%;max-height:86vh;overflow:auto;border-radius:12px;padding:18px;box-shadow:0 20px 60px rgba(2,6,23,0.4)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <h3 style="margin:0;font-size:18px">Frequently Asked Questions</h3>
+                    <button id="faqClose" style="border:0;background:transparent;font-size:18px;cursor:pointer">✕</button>
+                </div>
+                <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center">
+                    <input id="faqSearch" placeholder="Search FAQs..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #ddd">
+                    <button id="faqClear" style="padding:8px 10px;border-radius:8px;border:0;background:#e5e7eb;cursor:pointer">Clear</button>
+                </div>
+                <div id="faqList" style="display:flex;flex-direction:column;gap:10px">
+                    <!-- Sample entries -->
+                    <div class="faq-entry"><b>How do I reset a counselor's password?</b><p style="margin:6px 0">Go to Counselor Management, open the counselor details and click 'Reset Password'.</p></div>
+                </div>
+            </div>
+        </div>
+
+            <script>
+                (function(){
+                    // Robust wiring: ensure handlers are attached after DOM ready and via delegation
+                    function initFaq(){
+                        const faqModal = document.getElementById('faqModal');
+                        const faqClose = document.getElementById('faqClose');
+                        const faqSearch = document.getElementById('faqSearch');
+                        const faqClear = document.getElementById('faqClear');
+                        const faqList = document.getElementById('faqList');
+
+                        if (!faqModal) return;
+
+                        function openFaq(){ faqModal.style.display = 'flex'; try{ faqSearch && faqSearch.focus(); }catch(e){} }
+                        function closeFaq(){ faqModal.style.display = 'none'; try{ if (faqSearch) { faqSearch.value = ''; filterFaq(''); } }catch(e){} }
+
+                        function filterFaq(q){
+                            const entries = faqList ? faqList.querySelectorAll('.faq-entry') : [];
+                            const s = (q || '').trim().toLowerCase();
+                            entries.forEach(e => {
+                                const text = (e.textContent || '').toLowerCase();
+                                e.style.display = (s === '' || text.includes(s)) ? 'block' : 'none';
+                            });
+                        }
+
+                        // Direct element handlers
+                        faqClose && faqClose.addEventListener('click', closeFaq);
+                        faqClear && faqClear.addEventListener('click', ()=>{ if (faqSearch) { faqSearch.value=''; filterFaq(''); faqSearch.focus(); } });
+                        faqSearch && faqSearch.addEventListener('input', (e)=> filterFaq(e.target.value));
+
+                        // Close on Esc or click outside modal content
+                        document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeFaq(); });
+                        faqModal.addEventListener('click', (e)=>{ if (e.target === faqModal) closeFaq(); });
+
+                        // Event delegation: handle clicks on the FAQ link even if DOM changes
+                        document.addEventListener('click', function delegatedFaqClick(e){
+                            const el = e.target && e.target.closest ? e.target.closest('#faqLink') : null;
+                            if (el) { e.preventDefault(); openFaq(); }
+                        });
+                    }
+
+                    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initFaq); else initFaq();
+                })();
+            </script>
+                    <!-- Contact Support removed -->
+                    <!-- System Logs removed -->
+
+                        <!-- About Modal -->
+                        <div id="aboutModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.6);align-items:center;justify-content:center;z-index:5003">
+                            <div style="background:#fff;max-width:720px;width:94%;max-height:86vh;overflow:auto;border-radius:12px;padding:16px;box-shadow:0 20px 60px rgba(2,6,23,0.45)">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                                    <h3 style="margin:0;font-size:18px">About SafeSpace</h3>
+                                    <button id="aboutClose" style="border:0;background:transparent;font-size:18px;cursor:pointer">✕</button>
+                                </div>
+                                <div style="margin-bottom:8px">
+                                    <p style="margin:0 0 6px 0">Version: <strong>1.0.0</strong></p>
+                                    <p style="margin:0 0 6px 0">Build: <strong>2025-10-17</strong></p>
+                                    <p style="margin:0 0 6px 0">Contact: <a href="mailto:support@example.com">support@example.com</a></p>
+                                </div>
+                                <div style="font-size:14px;color:#444">
+                                    <p>This admin portal is part of the SafeSpace system. It provides management tools for appointments, users, counselors and system settings.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            (function(){
+                                function openAbout(){ document.getElementById('aboutModal') && (document.getElementById('aboutModal').style.display='flex'); }
+                                function closeAbout(){ document.getElementById('aboutModal') && (document.getElementById('aboutModal').style.display='none'); }
+                                document.addEventListener('click', function(e){ if (e.target && e.target.closest && e.target.closest('#aboutBtn')) { e.preventDefault(); openAbout(); } });
+                                document.getElementById('aboutClose')?.addEventListener('click', closeAbout);
+                                document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeAbout(); });
+                                document.getElementById('aboutModal')?.addEventListener('click', function(e){ if (e.target === this) this.style.display='none'; });
+                            })();
+                        </script>
+
+     <style>
+        /* --- START OF SHARED STYLES (MATCHED TO admin_dashboard.html) --- */
+        html, body { /* Added 'html,' and '!important' for Tailwind override */
+            font-family: Arial, sans-serif !important;
+            margin: 0;
+            background-color: #f4f7fa;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        /* HEADER & TOP BAR STYLES */
+        .header-and-sidebar-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1400;
+            display: flex;
+            background-color: #1e8e3e;
+            color: #f0f3f6;
+            height: 60px;
+            transition: left 0.3s ease;
+        }
+        .sidebar-top {
+            width: 250px;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            height: 60px;
+            transition: width 0.3s ease;
+        }
+        .sidebar-top.collapsed {
+            width: 80px;
+            justify-content: center;
+        }
+        .sidebar-top.collapsed .sidebar-logo {
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease, width 0.3s ease;
+        }
+        .sidebar-logo img {
+            height: 40px;
+        }
+        .sidebar-logo span {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            white-space: nowrap;
+        }
+        .menu-icon {
+            cursor: pointer;
+            font-size: 24px;
+            margin-left: auto;
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+        }
+        .menu-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        .menu-icon:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .main-top-bar {
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px; 
+        }
+        .main-top-bar .portal-title {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .main-top-bar .user-info {
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+        .main-top-bar .user-info .material-icons {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+        .main-top-bar .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            color: #1e8e3e; 
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 18px;
+        }
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: 250px;
+            background: #f0f3f6;
+            border-right: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: calc(100vh - 60px);
+            z-index: 999;
+            overflow: auto;
+            transition: width 0.3s ease;
+        }
+        .nav-menu ul {
+            list-style: none;
+            padding: 12px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .nav-item {
+            color: #1f2937;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 10px;
+            border-radius: 8px;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 400;
+            font-size: 15px;
+            transition: background 0.2s, color 0.2s;
+            text-align: left;
+            width: 100%;
+        }
+        .nav-item:hover {
+            background: rgba(15,122,52,0.08) !important;
+            color: #0f7a34 !important;
+            font-weight: 400 !important;
+            border-radius: 8px !important;
+        }
+        .nav-item.active {
+            background: rgba(15,122,52,0.12) !important;
+            color: #0f7a34 !important;
+            font-weight: 600 !important;
+        }
+        .nav-item:hover .icon,
+        .nav-item.active .icon {
+            color: #1f2937 !important;
+        }
+        .nav-item .icon {
+            width: 28px;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            line-height: 1;
+            color: #1f2937;
+            transition: color 0.2s;
+        }
+        .nav-item .label {
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        .sidebar.collapsed .nav-item .label {
+            display: none;
+        }
+        .sidebar.collapsed .nav-item .icon {
+            width: 56px;
+            font-size: 26px;
+            justify-content: center;
+        }
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px 6px;
+            gap: 0;
+        }
+        /* --- END OF SHARED STYLES --- */
+
+        /* Mobile sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .sidebar.collapsed {
+                width: 280px;
+                transform: translateX(-100%);
+            }
+        }
+        /* MAIN CONTENT STYLES */
+        .main-content {
+            position: fixed;
+            top: 60px; 
+            left: 250px; 
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: auto; /* internal scrolling */
+            padding: 30px;
+            transition: left 0.3s ease;
+            min-height: auto;
+            background: transparent;
+        }
+
+        .main-content.shifted {
+            left: 80px; /* when sidebar collapses */
+        }
+        
+        /* Mobile overlay and responsive content */
+        @media (max-width: 768px) {
+            .main-content {
+                left: 0 !important; /* full width on small screens */
+                padding: 20px 15px;
+            }
+            .main-content.shifted {
+                left: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 15px 10px;
+            }
+        }
+        /* --- END OF SHARED STYLES --- */
+
+        /* --- START OF CUSTOM STYLES FOR REPLACED CONTENT --- */
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px;
+        }
+        .sidebar-footer .nav-item { display:flex; align-items:center; gap:12px; padding:10px; border-radius:8px; }
+        .sidebar-footer .nav-item .label { transition: opacity 0.15s ease; }
+        .sidebar.collapsed .sidebar-footer .nav-item .label { display:none; }
+        .sidebar-footer { z-index: 1000; }
+        
+    /* Profile dropdown styles (shared across pages) */
+    .profile-dropdown .profile-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 12px 34px rgba(2,6,23,0.12), 0 4px 10px rgba(2,6,23,0.06);
+      overflow: hidden;
+      animation: fadeIn .12s ease;
+      transition: transform .14s ease, box-shadow .14s ease, opacity .12s ease;
+      transform-origin: top right;
+    }
+    .profile-card-top { display:flex; justify-content:center; padding:14px 12px 6px; }
+    .avatar-large {
+      width:120px; height:120px; border-radius:50%; background:#f3faf5; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:32px; position:relative; overflow:hidden; border:4px solid rgba(16,185,129,0.06);
+    }
+    .avatar-large img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .18s ease; box-shadow: 0 6px 18px rgba(2,6,23,0.08); }
+    .avatar-large:hover img { transform: scale(1.02); }
+    .avatar-camera { position:absolute; right:6px; bottom:6px; border-radius:50%; background:#fff; border:0; width:30px; height:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 12px rgba(2,6,23,0.06); cursor:pointer; font-size:13px; }
+    .profile-card-body { padding: 10px 18px 16px; text-align:center; display:flex; flex-direction:column; gap:8px; }
+    .profile-email { font-size:13px; color:#6b7280; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .profile-greeting { font-weight:700; font-size:18px; margin-top:4px; color:#111827; }
+    .manage-btn { display:inline-block; width:100%; padding:10px 12px; border-radius:999px; border:1px solid rgba(16,185,129,0.12); background:#10b981; color:#fff; font-weight:700; box-shadow:none; cursor:pointer; }
+    .manage-btn:hover { transform:none; filter:brightness(.98); }
+    .profile-divider { height:1px; background:#f1f5f9; margin:8px 0; }
+    .profile-actions { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .profile-link { flex:1; text-align:left; border:0; background:transparent; padding:8px; color:#374151; font-weight:600; cursor:pointer; }
+    .signout-link { flex:1; text-align:right; border:0; background:transparent; padding:8px; color:#ef4444; font-weight:700; cursor:pointer; }
+    @media (max-width:420px) { .profile-dropdown { right:8px !important; left:8px !important; min-width:auto; } }
+    .profile-dropdown[aria-hidden="false"] .profile-card { transform: translateY(-6px); box-shadow: 0 20px 54px rgba(2,6,23,0.16), 0 6px 18px rgba(2,6,23,0.06); }
+
+    .icon-btn { background: transparent !important; border: 0 !important; outline: none !important; box-shadow: none !important; padding: 6px; display: inline-flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+    .icon-btn:focus, .icon-btn:active {
+        outline: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* popover / dropdown visibility controlled by attributes */
+    .popover { display: none; }
+    .popover[data-open="true"] { display: block; }
+    .dropdown { display: none; }
+    .dropdown[aria-hidden="false"] { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Make sidebar logout text/icon red on hover/focus and keyboard focus */
+    #sidebarLogoutBtn { cursor: pointer; }
+    #sidebarLogoutBtn .label, #sidebarLogoutBtn .icon {
+        color: inherit;
+        transition: color 160ms ease-in-out, transform 120ms ease;
+    }
+    /* Hover and focus (mouse) */
+    #sidebarLogoutBtn:hover .label,
+    #sidebarLogoutBtn:hover .icon {
+        color: #ef4444 !important; /* red text/icon on hover */
+    }
+    /* Keyboard focus visible for accessibility */
+    #sidebarLogoutBtn:focus-visible .label,
+    #sidebarLogoutBtn:focus-visible .icon {
+        color: #ef4444 !important; /* red text/icon on keyboard focus */
+    }
+        /* Added from try.html to support the accordion effect's rotation */
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+        /* --- END OF CUSTOM STYLES FOR REPLACED CONTENT --- */
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+        <div class="header-and-sidebar-top">
+            <aside class="sidebar-top" id="sidebarTop">
+                <div class="sidebar-logo">
+                    <img src="safespace.png" alt="SafeSpace Logo">
+                    <span>SafeSpace</span>
+                </div>
+                <i class="material-icons menu-icon" id="menuIcon">menu</i>
+            </aside>
+            <header class="main-top-bar">
+                <h1 class="portal-title">Admin Portal</h1>
+                <div class="user-info">
+                    <div class="top-greeting" aria-live="polite" style="margin-right:12px; text-align:right; color:#fff; margin-left:8px;">
+                        <div id="topGreetingName" style="font-weight:700; font-size:14px;">Good Morning, Admin</div>
+                                                        <div id="topGreetingTime" style="font-size:12px; opacity:0.95; margin-top:2px;">Tuesday, Oct 14, 2025 — 02:51 AM</div>
+                                                    </div>
+                                                    <div style="position:relative;display:inline-block;">
+                                                        <button id="notifBtn" class="icon-btn" aria-expanded="false" title="Notifications" style="color:white;background:#16a34a;padding:8px;border-radius:8px;border:0;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(22,163,74,0.15);">
+                                                            <i class="material-icons" style="color:white;font-size:20px;">notifications</i>
+                                                        </button>
+                                                        <div id="notifPanel" class="popover" data-open="false" style="position:fixed;right:20px;top:62px;min-width:280px;z-index:4500;display:none;">
+                                                            <div class="notif-card" role="dialog" aria-label="Notifications" aria-hidden="true" style="border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(2,6,23,0.08);background:#fff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-width:280px;">
+                                                                <div class="notif-header popover-header" style="background:#10b981;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+                                                                    <div class="notif-title" style="font-weight:700;font-size:15px;">Notifications</div>
+                                                                    <div id="notifTimestamp" class="notif-timestamp" style="font-size:12px;opacity:0.95;">--</div>
+                                                                </div>
+                                                                <div id="notifList" class="popover-body" style="color:#111827;padding:8px 12px;">
+                                                                    <div class="popover-empty">No new notifications.</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div style="position:relative;display:inline-block;margin-left:-8px;">
+                                                        <button id="profileBtn" class="user-avatar" aria-haspopup="true" aria-expanded="false" title="Profile" style="border:0;cursor:pointer;padding:0;position:relative;overflow:hidden;">
+                                                            <div id="profileBtnSpinner" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none">
+                                                                <svg width="28" height="28" viewBox="0 0 50 50" aria-hidden="true">
+                                                                    <circle cx="25" cy="25" r="18" fill="#ffffff" opacity="0.2"></circle>
+                                                                    <path fill="#10B981" d="M25 5a20 20 0 0 1 0 6a14 14 0 1 0 0 28 14 14 0 0 1 0-34">
+                                                                        <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                                                                    </path>
+                                                                </svg>
+                                                            </div>
+                                                            <div id="profileBtnDefaultIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+                                                                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                    <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="#9CA3AF"></path>
+                                                                    <path d="M3 20c0-2.761 4.477-5 9-5s9 2.239 9 5v1H3v-1z" fill="#9CA3AF"></path>
+                                                                </svg>
+                                                            </div>
+                                                        </button>
+                                                        <div id="profileDropdown" class="dropdown profile-dropdown" aria-hidden="true" style="position:fixed;right:20px;top:62px;min-width:320px;z-index:3000;">
+                                                            <div style="background:#fff;border-radius:12px;padding:10px;min-width:320px;box-shadow:0 12px 30px rgba(2,6,23,0.12);font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;">
+                                                                <div style="display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                                                                    <div class="avatar-large" id="profileAvatar" style="width:80px;height:80px;border-radius:60px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;font-size:18px"></div>
+                                                                    <div style="flex:1;min-width:0">
+                                                                        <div id="profileGreeting" style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hi, Admin</div>
+                                                                        <div id="profileEmail" style="font-size:13px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">you@example.com</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div style="padding:8px 6px;display:flex;flex-direction:column;gap:6px">
+                                                                    <button id="accountEdit" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                                                                        <i class="material-icons icon" style="font-size:18px;line-height:1;">person</i>
+                                                                        <span style="flex:1;text-align:left">Manage your profile</span>
+                                                                    </button>
+                                                                    <button id="accountSettings" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                                                                        <i class="material-icons icon" style="font-size:18px;line-height:1;">settings</i>
+                                                                        <span style="flex:1;text-align:left">Settings & privacy</span>
+                                                                        <i class="material-icons icon" style="font-size:16px;opacity:0.7;">chevron_right</i>
+                                                                    </button>
+                                                                    <button id="accountLogout" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px;color:#111;font-weight:600">
+                                                                        <i class="material-icons icon" style="font-size:18px;line-height:1;color:#ef4444">logout</i>
+                                                                        <span style="flex:1;text-align:left">Log Out</span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+        </div>
+      </header>
+    </div>
+
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <nav class="nav-menu">
+                <nav class="nav" id="nav" style="display:flex;flex-direction:column;gap:8px;padding:12px;">
+                    <button class="nav-item" onclick="location.href='admin_dashboard.html'" data-name="Dashboard">
+                        <span class="material-icons icon" style="font-size:26px;">dashboard</span>
+                        <span class="label" style="font-size:15px;">Home</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_user_management.html'" data-name="User Management">
+                        <span class="material-icons icon" style="font-size:26px;">groups</span>
+                        <span class="label" style="font-size:15px;">Student Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_counselor_management.html'" data-name="Counselor Management">
+                        <span class="material-icons icon" style="font-size:26px;">psychology</span>
+                        <span class="label" style="font-size:15px;">Counselor Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_content_management.html'" data-name="Content Management">
+                        <span class="material-icons icon" style="font-size:26px;">description</span>
+                        <span class="label" style="font-size:15px;">Content Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_report_management.html'" data-name="Reports Management">
+                        <span class="material-icons icon" style="font-size:26px;">warning</span>
+                        <span class="label">Reports Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_session_report.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">fact_check</span>
+                        <span class="label">Session Reports</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_psych_test.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">assessment</span>
+                        <span class="label">Psychological Test</span>
+                    </button>
+                    <button class="nav-item active" onclick="location.href='admin_settings.html'" data-name="System Settings">
+                        <span class="material-icons icon" style="font-size:26px;">settings</span>
+                        <span class="label" style="font-size:15px;">System Settings</span>
+                    </button>
+                </nav>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="nav-item" id="sidebarLogoutBtn" type="button" title="Sign out">
+                    <i class="material-icons icon" style="font-size:26px;">logout</i>
+                    <span class="label" style="font-size:15px;">Logout</span>
+                </button>
+            </div>
+        </aside>
+        <main class="main-content" id="mainContent">
+            <div class="p-0 sm:p-6 w-full"> 
+                <h1 class="text-3xl font-bold mb-8 text-gray-900">Admin Settings</h1>
+
+                <!-- About card/button (moved below Support & Info) -->
+
+                <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                <button class="w-full px-6 py-4 flex justify-between items-center text-left font-semibold text-gray-700 border-b focus:outline-none" onclick="toggleSection('account')">
+                    <span style="display:inline-flex;align-items:center;margin-right:8px"><span class="material-icons" style="font-size:20px;vertical-align:middle;margin-right:6px">person</span>Account</span>
+                    <svg id="icon-account" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="account" class="p-6 space-y-4 hidden">
+                    <div>
+                        <label class="block text-sm text-gray-600">Username</label>
+                        <input id="acct_username" type="text" placeholder="username" class="mt-1 block w-full rounded-md border-gray-300 p-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-600">Email</label>
+                        <input id="acct_email" type="email" placeholder="admin@example.com" class="mt-1 block w-full rounded-md border-gray-300 p-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-600">Phone</label>
+                        <input id="acct_phone" type="tel" placeholder="+63 " class="mt-1 block w-full rounded-md border-gray-300 p-2">
+                    </div>
+
+
+                    <!-- Disable account toggle removed -->
+
+                    <div id="acct_msg" class="text-sm text-gray-600"></div>
+
+                    <!-- Buttons removed per request: Save and Disable account actions are handled programmatically -->
+
+                    <script type="module">
+                        import { db, ref, update, auth, onAuthStateChanged } from './admin_main.js';
+                        (function(){
+                            const key = 'admin_account_settings';
+                            const defaults = { username: 'admin', email: 'admin@example.com', phone: '', disabled: false };
+
+                            function safeParse(v){ try { return JSON.parse(v||'null'); } catch(e){ return null; } }
+
+                            // populate the account fields from window.adminProfile if available, otherwise fall back to localStorage
+                            function populateFromProfile(profile){
+                                if (!profile) return false;
+                                try{
+                                    const uname = profile.username || '';
+                                    const email = profile.email || '';
+                                    const phone = profile.phone || '';
+                                    document.getElementById('acct_username').value = uname;
+                                    document.getElementById('acct_email').value = email;
+                                    document.getElementById('acct_phone').value = phone;
+                                    // disabled flag may be stored in profile.disabled
+                                    // account disabled flag removed from UI
+                                    return true;
+                                }catch(e){ console.warn('populateFromProfile', e); return false; }
+                            }
+
+                            function load(){
+                                try{
+                                    // Prefer live profile if present
+                                    if (window.adminProfile && populateFromProfile(window.adminProfile)) return;
+
+                                    // otherwise fall back to local storage
+                                    const cfg = Object.assign({}, defaults, safeParse(localStorage.getItem(key)));
+                                    document.getElementById('acct_username').value = cfg.username || '';
+                                    document.getElementById('acct_email').value = cfg.email || '';
+                                    document.getElementById('acct_phone').value = cfg.phone || '';
+                                    // account disabled flag removed from UI
+                                }catch(e){ console.warn('load account settings', e); }
+                            }
+
+                            async function saveToDb(payload){
+                                try{
+                                    const uid = window.adminProfile && window.adminProfile.uid;
+                                    if (!uid) {
+                                        // persist locally if no uid yet
+                                        localStorage.setItem(key, JSON.stringify(payload));
+                                        return { local: true };
+                                    }
+                                    await update(ref(db, `admins/${uid}`), payload);
+                                    // reflect saved values on window.adminProfile
+                                    Object.assign(window.adminProfile || {}, payload);
+                                    return { local: false };
+                                }catch(err){ console.warn('saveToDb failed', err); throw err; }
+                            }
+
+                            async function save(){
+                                try{
+                                    const cfg = {
+                                        username: (document.getElementById('acct_username').value || '').trim(),
+                                        email: (document.getElementById('acct_email').value || '').trim(),
+                                        phone: (document.getElementById('acct_phone').value || '').trim()
+                                    };
+                                    const result = await saveToDb(cfg);
+                                    showMsg((result && result.local) ? 'Account saved locally' : 'Account saved');
+                                    // also persist local fallback copy
+                                    localStorage.setItem(key, JSON.stringify(cfg));
+                                }catch(e){ console.warn('save account settings', e); showMsg('Unable to save'); }
+                            }
+
+                            function showMsg(text){ const el = document.getElementById('acct_msg'); if(!el) return; el.textContent = text; setTimeout(()=>{ if (el.textContent === text) el.textContent = ''; }, 2000); }
+
+                            document.getElementById('acct_save')?.addEventListener('click', save);
+
+                            document.getElementById('acct_delete')?.addEventListener('click', function(){
+                                if (!confirm('Delete this account and all local account data? This cannot be undone locally.')) return;
+                                try{ localStorage.removeItem(key); showMsg('Account removed');
+                                    // Optionally, redirect to login page
+                                    setTimeout(()=>{ try{ window.location.href = 'login.html'; }catch(e){} }, 800);
+                                }catch(e){ console.warn('delete account', e); showMsg('Unable to delete'); }
+                            });
+
+                            // Disable toggle removed; no auto-save handler
+
+                            // Initialize: listen for adminProfile to be set and populate from it
+                            if (window.adminProfile) populateFromProfile(window.adminProfile);
+                            // If admin_profile loader sets it later, respond to the same event used elsewhere
+                            window.addEventListener('adminProfileLoaded', ()=>{ if (window.adminProfile) populateFromProfile(window.adminProfile); });
+
+                            // Also listen for auth state in case admin_main initializes later
+                            onAuthStateChanged(auth, (user) => {
+                                if (!user) return;
+                                // small poll like admin_profile does
+                                const start = Date.now();
+                                const poll = setInterval(() => {
+                                    if (window.adminProfile) { populateFromProfile(window.adminProfile); clearInterval(poll); }
+                                    if (Date.now() - start > 3000) clearInterval(poll);
+                                }, 200);
+                            });
+
+                            // Load fallback values now
+                            load();
+                        })();
+                    </script>
+                </div>
+                </div>
+
+                <!-- Toggle slide styles: move the thumb to the right when checkbox is checked -->
+                <style>
+                    /* Target the inline label structure: input + track + thumb */
+                    label.relative.inline-flex input[type="checkbox"] + div {
+                        transition: background-color 160ms ease-in-out;
+                    }
+                    label.relative.inline-flex input[type="checkbox"] + div + div {
+                        left: 0.5rem; /* align with existing left-0.5 */
+                        top: 0.5rem;  /* align with existing top-0.5 */
+                        transition: transform 160ms ease-in-out;
+                        will-change: transform;
+                    }
+                    /* When checked, move thumb to the right and update track color */
+                    label.relative.inline-flex input[type="checkbox"]:checked + div + div {
+                        transform: translateX(1.35rem); /* ~22px, matches track inner width */
+                    }
+                    label.relative.inline-flex input[type="checkbox"]:checked + div {
+                        background-color: #2563eb; /* Tailwind blue-600 */
+                    }
+                </style>
+
+                <!-- User Management section removed as requested -->
+
+                <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                <button class="w-full px-6 py-4 flex justify-between items-center text-left font-semibold text-gray-700 border-b focus:outline-none" onclick="toggleSection('privacy')">
+                    <span style="display:inline-flex;align-items:center;margin-right:8px"><span class="material-icons" style="font-size:20px;vertical-align:middle;margin-right:6px">shield</span>Privacy &amp; Security</span>
+                    <svg id="icon-privacy" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="privacy" class="p-6 space-y-4 hidden">
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Privacy &amp; Security — Admin Portal</h2>
+                        <div class="text-sm text-gray-500 mt-1">Last updated: December 9, 2025</div>
+                        <p class="mt-3 text-gray-600">This section explains how administrative access to SafeSpace is governed, which safeguards protect sensitive information, and the responsibilities of administrators when handling personal and counseling-related data.</p>
+
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-white p-4 rounded-lg shadow-sm border">
+                                <div class="flex items-start gap-3">
+                                    <div class="p-2 bg-green-50 rounded-md"><i class="material-icons" style="color:#16a34a">admin_panel_settings</i></div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900">Admin Access</div>
+                                        <div class="text-sm text-gray-500 mt-1">Administrators have elevated privileges to manage users, counselors, and system settings. Access is granted based on role and approved by institutional policy.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-lg shadow-sm border">
+                                <div class="flex items-start gap-3">
+                                    <div class="p-2 bg-yellow-50 rounded-md"><i class="material-icons" style="color:#f59e0b">history</i></div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900">Audit &amp; Logging</div>
+                                        <div class="text-sm text-gray-500 mt-1">All admin actions (logins, changes to accounts, data exports) are logged and available to auditors to ensure accountability and traceability.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-lg shadow-sm border">
+                                <div class="flex items-start gap-3">
+                                    <div class="p-2 bg-blue-50 rounded-md"><i class="material-icons" style="color:#3b82f6">security</i></div>
+                                    <div>
+                                        <div class="font-semibold text-gray-900">Least Privilege</div>
+                                        <div class="text-sm text-gray-500 mt-1">Admin roles follow the principle of least privilege — only the minimum rights needed to perform duties are assigned.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-2 border-green-300 rounded-lg p-4 bg-white mb-4">
+                        <div class="flex items-start gap-3">
+                            <div style="flex-shrink:0">
+                                <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">1</div>
+                            </div>
+                            <div style="flex:1">
+                                <h3 class="text-lg font-semibold text-gray-900">Administrator Responsibilities</h3>
+                                <p class="mt-2 text-sm text-gray-600">As an admin you must protect user privacy and only access data as required for legitimate administrative tasks. Do not export, share, or use personal or counseling data for purposes outside institutional policy.</p>
+                                <ul class="mt-3 text-sm text-gray-700" style="line-height:1.6">
+                                    <li><strong>Limit queries and exports</strong> to the minimum necessary data.</li>
+                                    <li><strong>Report incidents</strong> immediately to the Data Protection Officer (DPO) and system admin.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-2 border-green-300 rounded-lg p-4 bg-white mb-4">
+                        <div class="flex items-start gap-3">
+                            <div style="flex-shrink:0">
+                                <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">2</div>
+                            </div>
+                            <div style="flex:1">
+                                <h3 class="text-lg font-semibold text-gray-900">Access Controls &amp; Audit</h3>
+                                <p class="mt-2 text-sm text-gray-600">Admin access is enforced with Firebase Authentication, role checks, and server-side rules. Key points:</p>
+                                <ul class="mt-2 text-sm text-gray-700" style="line-height:1.6">
+                                    <li><strong>Authentication:</strong> Strong password policies are required for admin accounts.</li>
+                                    <li><strong>Authorization:</strong> Role-based checks limit actions to permitted admins only.</li>
+                                    <li><strong>Audit Trails:</strong> Changes to accounts, permissions, and data exports are logged and retained for review.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-2 border-green-300 rounded-lg p-4 bg-white mb-4">
+                        <div class="flex items-start gap-3">
+                            <div style="flex-shrink:0">
+                                <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">3</div>
+                            </div>
+                            <div style="flex:1">
+                                <h3 class="text-lg font-semibold text-gray-900">Security Measures for Admins</h3>
+                                <ul class="mt-2 text-sm text-gray-700" style="line-height:1.6">
+                                    <li><strong>Encrypted transport (TLS)</strong> for all client-server communication.</li>
+                                    <li><strong>Cloud protections</strong> via Firebase security rules and Google-managed infrastructure.</li>
+                                    <li><strong>Session management</strong> with timeouts and forced reauthentication for sensitive operations.</li>
+                                    <li><strong>IP/Geo restrictions</strong> and additional controls may be applied per institutional policy.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-2 border-green-300 rounded-lg p-4 bg-white mb-4">
+                        <div class="flex items-start gap-3">
+                            <div style="flex-shrink:0">
+                                <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">4</div>
+                            </div>
+                            <div style="flex:1">
+                                <h3 class="text-lg font-semibold text-gray-900">Data Sharing &amp; Retention</h3>
+                                <p class="mt-2 text-sm text-gray-600">Admin-level data access must not be used to share or sell user data. Disclosure is permitted only for legal requirements, institutional procedures, or with explicit consent.</p>
+                                <p class="mt-2 text-sm text-gray-600">Data retention follows institutional policy; deleted accounts and counseling records are removed from Firebase according to approved retention schedules.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-2 border-green-300 rounded-lg p-4 bg-white mb-4">
+                        <div class="flex items-start gap-3">
+                            <div style="flex-shrink:0">
+                                <div class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">5</div>
+                            </div>
+                            <div style="flex:1">
+                                <h3 class="text-lg font-semibold text-gray-900">Questions &amp; Reporting</h3>
+                                <p class="mt-2 text-sm text-gray-600">If you have privacy or security concerns, contact the institution's Data Protection Officer (DPO) or the SafeSpace system administrator. Report suspected breaches immediately to the institution's DPO.</p>
+                                <p class="mt-3 text-sm text-gray-600">For formal complaints, users may contact the National Privacy Commission (NPC) as provided by law.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+
+                
+
+                <!-- Dark mode section removed per request -->
+
+                <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                <button class="w-full px-6 py-4 flex justify-between items-center text-left font-semibold text-gray-700 border-b focus:outline-none" onclick="toggleSection('support')">
+                    <span style="display:inline-flex;align-items:center;margin-right:8px"><span class="material-icons" style="font-size:20px;vertical-align:middle;margin-right:6px">support_agent</span>Support &amp; Info</span>
+                    <svg id="icon-support" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="support" class="p-6 space-y-3 hidden">
+                    <a href="#" id="faqLink" class="block text-blue-600 hover:underline">FAQ</a>
+                </div>
+                </div>
+
+                <!-- About card/button inserted below Support & Info -->
+                <div class="mb-6">
+                    <button id="aboutBtn" class="bg-white rounded-lg shadow w-full text-left p-4 flex items-center justify-between hover:shadow-md">
+                        <div style="display:flex;align-items:center;gap:12px">
+                            <span class="material-icons" style="font-size:22px;vertical-align:middle;color:#6b7280">info</span>
+                            <div>
+                                <div class="text-lg font-semibold text-gray-900">About</div>
+                                <div class="text-sm text-gray-600">Version, build and contact information</div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500">Learn more</div>
+                    </button>
+                </div>
+
+            </div>
+            </main>
+    </div>
+
+    <script>
+        // The original script content for sidebar and mobile responsiveness is kept here.
+        const menuIcon = document.getElementById('menuIcon');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarTop = document.getElementById('sidebarTop'); 
+        
+        // Create overlay for mobile
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        
+        // Mobile detection
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Toggle sidebar with mobile responsiveness
+        menuIcon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isMobile()) {
+                // Mobile behavior - overlay sidebar
+                const isOpen = sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active', isOpen);
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            } else {
+                // Desktop behavior - collapse sidebar
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            }
+        });
+        
+        // Close mobile sidebar when clicking overlay
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                // Reset mobile states when switching to desktop
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                // Ensure desktop state is consistent
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            } else {
+                // Reset desktop states when switching to mobile
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+        
+        // Close mobile sidebar when clicking a menu item
+        document.querySelectorAll('.nav-item').forEach(link => { 
+            link.addEventListener('click', () => {
+                if (isMobile()) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+        
+        // Initialize state for desktop on load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isMobile()) {
+                // Default to uncollapsed on desktop 
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+        
+        // JAVASCRIPT FOR ACCORDION FUNCTIONALITY
+        function toggleSection(id) {
+            const section = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                section.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+    </script>
+        <script type="module">
+            import { requireAdminAuth, setTheme, getTheme } from './admin_main.js';
+            import { loadAdminProfileInto, startGreetingClock } from './admin_profile_loader.js';
+            requireAdminAuth();
+            loadAdminProfileInto({ greetingSelector: '#topGreetingName', avatarSelector: '.main-top-bar .user-avatar', timeSelector: '#topGreetingTime' });
+            startGreetingClock('#topGreetingName', '#topGreetingTime');
+
+            // Dark-mode radios removed from this page (feature disabled here)
+        </script>
+    <script src="./profile_dropdown.js"></script>
+    <script>
+        (function(){
+            
+
+            // Logs & Monitoring wiring removed (System Logs / Contact Support removed)
+
+            // Demo system health population (client-side demo only)
+            function updateDemoHealth(){
+                const cpu = (Math.random()*60 + 5).toFixed(1) + '%';
+                const mem = (Math.random()*50 + 20).toFixed(1) + '%';
+                const disk = (Math.random()*70 + 10).toFixed(1) + '%';
+                const uptime = Math.floor(Math.random()*72) + ' hrs';
+                document.getElementById('healthCpu') && (document.getElementById('healthCpu').textContent = cpu);
+                document.getElementById('healthMem') && (document.getElementById('healthMem').textContent = mem);
+                document.getElementById('healthDisk') && (document.getElementById('healthDisk').textContent = disk);
+                document.getElementById('healthUptime') && (document.getElementById('healthUptime').textContent = uptime);
+            }
+            updateDemoHealth();
+            // refresh every 30s while on this page
+            setInterval(updateDemoHealth, 30000);
+        })();
+    </script>
+        <script>
+        (function(){
+            if (window.__sidebarLogoutHandlerAdded) return; window.__sidebarLogoutHandlerAdded = true;
+            function attachLogout(){
+                const sidebarLogout = document.getElementById('sidebarLogoutBtn');
+                if (!sidebarLogout) return;
+                sidebarLogout.addEventListener('click', () => {
+                    const profileLogout = document.getElementById('accountLogout');
+                    if (profileLogout) { profileLogout.click(); return; }
+                    if (typeof window.signOutAndRedirect === 'function') { window.signOutAndRedirect(); return; }
+                    try { localStorage.removeItem('authToken'); } catch(e){}
+                    window.location.href = 'login.html';
+                });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachLogout); else attachLogout();
+        })();
+        </script>
+            <div id="confirmModalLogout" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3000">
+                <div style="background:#fff;border-radius:12px;padding:18px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+                    <h3 id="confirmModalLogoutTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm</h3>
+                    <div id="confirmModalLogoutMessage" style="font-size:15px;margin-bottom:12px;color:#111">Are you sure you want to sign out?</div>
+                    <div style="display:flex;gap:8px;justify-content:flex-end">
+                        <button id="confirmModalLogoutCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                        <button id="confirmModalLogoutOk" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Confirm</button>
+                    </div>
+                </div>
+            </div>
+            <script>
+            (function(){
+                function attachLogout(){
+                    const sidebarLogout = document.getElementById('sidebarLogoutBtn');
+                    if (!sidebarLogout) return;
+                    if (sidebarLogout._logoutHandlerAttached) return;
+                    sidebarLogout._logoutHandlerAttached = true;
+                    const confirmModal = document.getElementById('confirmModalLogout');
+                    const confirmOk = document.getElementById('confirmModalLogoutOk');
+                    const confirmCancel = document.getElementById('confirmModalLogoutCancel');
+                    function doLogout(){
+                        const profileLogout = document.getElementById('accountLogout');
+                        if (profileLogout) { profileLogout.click(); return; }
+                        if (typeof window.signOutAndRedirect === 'function') { window.signOutAndRedirect(); return; }
+                        try { localStorage.removeItem('authToken'); } catch(e){}
+                        window.location.href = 'login.html';
+                    }
+                    sidebarLogout.addEventListener('click', () => {
+                        if (!confirmModal || !confirmOk || !confirmCancel) { if (confirm('Are you sure you want to sign out?')) doLogout(); return; }
+                        confirmModal.style.display = 'flex';
+                        function cleanup(){ confirmModal.style.display = 'none'; confirmOk.removeEventListener('click', onOk); confirmCancel.removeEventListener('click', onCancel); document.removeEventListener('keydown', onKeyDown); }
+                        function onOk(){ cleanup(); doLogout(); }
+                        function onCancel(){ cleanup(); }
+                        function onKeyDown(e){ if (e.key === 'Escape') cleanup(); }
+                        confirmOk.addEventListener('click', onOk);
+                        confirmCancel.addEventListener('click', onCancel);
+                        document.addEventListener('keydown', onKeyDown);
+                    });
+                }
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachLogout); else attachLogout();
+            })();
+            </script>
+</body>
+</html>

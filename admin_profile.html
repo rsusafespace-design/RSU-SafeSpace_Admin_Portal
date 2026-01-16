@@ -1,0 +1,2484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - Admin Profile</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Cropper.js for image cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            // Prevent browser caching of this page
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', window.location.href);
+            }
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                    window.location.reload();
+                }
+            });
+        </script>
+    <style>
+        /* --- START OF SHARED STYLES (MATCHED TO settings.html) --- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f7fa;
+            color: #333;
+        }
+
+        .header-and-sidebar-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            background-color: #1e8e3e;
+            color: white;
+            height: 60px; /* Matched settings.html */
+        }
+
+        .sidebar-top {
+            width: 250px;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+            height: 60px;
+            transition: width 0.3s ease;
+        }
+      
+        .sidebar-top.collapsed {
+            width: 80px; /* Matched settings.html */
+            justify-content: center;
+        }
+      
+        .sidebar-top.collapsed .sidebar-logo {
+            opacity: 0;
+            pointer-events: none;
+            width: 0;
+        }
+      
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease, width 0.3s ease;
+        }
+      
+        .sidebar-logo img {
+            height: 40px;
+        }
+      
+        .sidebar-logo span {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            white-space: nowrap;
+        }
+      
+        .menu-icon {
+            cursor: pointer;
+            font-size: 24px;
+            margin-left: auto;
+            padding: 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+        }
+      
+        .menu-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+      
+        .menu-icon:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+      
+        .main-top-bar {
+            flex-grow: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+        }
+
+        .main-top-bar .portal-title {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .main-top-bar .user-info {
+            display: flex;
+            align-items: center;
+            color: white; /* Matched settings.html */
+        }
+
+        .main-top-bar .user-info .material-icons {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .main-top-bar .user-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            color: #1e8e3e;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 18px;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            padding-top: 60px; /* Matched settings.html */
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #f0f3f6; /* Matched settings.html */
+            border-right: 1px solid rgba(0,0,0,0.06); /* Matched settings.html */
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 60px; /* Matched settings.html */
+            left: 0;
+            height: calc(100vh - 60px); /* Matched settings.html */
+            z-index: 999;
+            overflow: auto;
+            transition: width 0.3s ease;
+            box-shadow: none;
+        }
+        
+        /* Nav Menu Styles (COPIED FROM settings.html) */
+        .nav-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-menu .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+        }
+        
+         .nav-item {
+        color: #1f2937;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 10px;
+        border-radius: 8px;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        font-weight: 400;
+        font-size: 15px;
+        transition: background 0.2s, color 0.2s;
+        text-align: left;
+        width: 100%;
+    }
+    
+    .nav-item:hover {
+        background: rgba(15,122,52,0.08) !important;
+        color: #0f7a34 !important;
+        font-weight: 400 !important;
+        border-radius: 8px !important;
+    }
+        
+        .nav-item.active {
+            background: rgba(15,122,52,0.12) !important;
+            color: #0f7a34 !important;
+            font-weight: 600 !important;
+        }
+        
+        .nav-item .icon {
+            width: 28px;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            line-height: 1;
+            color: #1f2937;
+            transition: color 0.2s;
+        }
+
+        .nav-item.active .icon, .nav-item:hover .icon {
+            color: #0f7a34 !important;
+        }
+        
+        .nav-item .label {
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 1;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .sidebar.collapsed {
+            width: 80px; /* Matched settings.html */
+        }
+        
+        .sidebar.collapsed .nav-item .label {
+            display: none;
+        }
+        
+        .sidebar.collapsed .nav-item .icon {
+            width: 56px;
+            font-size: 26px;
+            justify-content: center;
+        }
+        
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 12px 6px;
+            gap: 0;
+        }
+        /* End of Nav Menu Styles */
+
+        /* Mobile sidebar overlay (COPIED FROM settings.html) */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .sidebar.collapsed {
+                width: 280px;
+                transform: translateX(-100%);
+            }
+        }
+        
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            margin-top: 60px; /* Matched settings.html */
+            margin-left: 250px;
+            min-height: calc(100vh - 60px); /* Matched settings.html */
+            padding: 30px;
+            transition: margin-left 0.3s ease;
+        }
+        main.shifted {
+            margin-left: 80px; /* Matched settings.html */
+        }
+        
+        /* --- START OF ADMIN PROFILE SPECIFIC STYLES (UPDATED TO DESIGN) --- */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 24px;
+            width: 100%;
+            align-items: start;
+        }
+
+        /* Left card (profile form) */
+        .profile-grid {
+            display: grid;
+            /* single-column layout for full-width stacking */
+            grid-template-columns: 1fr;
+            gap: 18px;
+            width: 100%;
+            align-items: start;
+            justify-items: stretch;
+            max-width: none;
+        }
+        
+
+        .profile-header {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+        }
+
+        /* Highlight style for admin/administrator role text (amber) */
+        .role-highlight {
+            background: #fff7ed; /* very light amber */
+            color: #92400e; /* amber/dark orange text */
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* Role/status container: position and badge sit inline and centered */
+        .profile-role-status {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .profile-role {
+            margin: 0;
+            font-size: 14px;
+            color: #4441eb; /* neutral dark */
+        }
+
+        .badge-active {
+            background: #e6f6ea;
+            color: #047857; /* greenish */
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .profile-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 4px solid #2f9d45;
+            background: white;
+            box-shadow: 0 6px 14px rgba(16,24,40,0.06);
+            flex-shrink: 0;
+        }
+
+        .profile-avatar img {
+            width: 88px;
+            height: 88px;
+            object-fit: cover;
+            border-radius: 50%;
+            display: block;
+        }
+
+        .edit-image-icon {
+            position: absolute;
+            bottom: -6px;
+            right: -6px;
+            background: #fff;
+            color: #2f9d45;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 12px rgba(16,24,40,0.08);
+            cursor: pointer;
+            border: 3px solid #e6f6ea;
+            padding: 0;
+        }
+
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 16px 18px;
+        }
+
+        .profile-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .profile-role {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        .badges {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .badge {
+            font-size: 12px;
+            padding: 6px 8px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-active {
+            background: #e6f6ea;
+            color: #067a32;
+        }
+
+        .badge-id {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Form-like details area */
+        .profile-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 4px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label {
+            font-size: 13px;
+            color: #4b5563;
+            font-weight: 600;
+        }
+
+        .detail-value {
+            background: #ffffff;
+            border: 1px solid #e6eef1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #374151;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+
+        .detail-input {
+            background: #fff;
+            border: 1px solid #e6eef1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .save-changes-wrap {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .btn-save-changes {
+            background: #17a34a;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 6px 12px rgba(23,163,74,0.12);
+        }
+
+        /* Recent activity list styling */
+        .activity-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+            /* keep natural height but allow vertical scroll when content overflows */
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* subtle custom scrollbar for WebKit browsers */
+        .activity-list::-webkit-scrollbar { width: 10px; }
+        .activity-list::-webkit-scrollbar-track { background: transparent; }
+        .activity-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 8px; }
+
+        .activity-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 8px 6px;
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        /* New: style server-rendered activity blocks inside #activityList to match dashboard */
+        #activityList > div {
+            display: flex !important;
+            gap: 12px !important;
+            align-items: flex-start !important;
+            padding: 12px !important;
+            border-radius: 8px !important;
+            background: #fff !important;
+            box-shadow: 0 1px 2px rgba(2,6,23,0.04) !important;
+            border: 1px solid #f1f5f9 !important;
+        }
+
+        /* icon square - use semantic classes for color */
+        #activityList > div > div:first-child,
+        #activityList .w-8 {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 8px !important;
+            display:flex !important;
+            align-items:center !important;
+            justify-content:center !important;
+            font-weight:700 !important;
+            font-size:14px !important;
+            flex: 0 0 40px !important;
+            background: #f3f4f6 !important;
+            color: #374151 !important;
+        }
+
+        .activity-icon.green { background:#10b981 !important; color:#ffffff !important; }
+        .activity-icon.blue { background:#0590ff !important; color:#ffffff !important; }
+        .activity-icon.teal { background:#059669 !important; color:#ffffff !important; }
+        .activity-icon.purple { background:#6d28d9 !important; color:#ffffff !important; }
+
+        /* text column */
+        #activityList > div > .flex-1 {
+            display:flex !important;
+            flex-direction:column !important;
+            min-width:0 !important;
+        }
+
+        #activityList .font-medium { font-weight:700 !important; color:#111827 !important; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        #activityList .text-xs.text-gray-500 { color:#6b7280 !important; font-size:13px !important; margin-top:4px; }
+
+        /* separators */
+        #activityList > div + div { border-top: 1px solid #eef2f7; }
+
+        .activity-row:last-child { border-bottom: none; }
+
+        .activity-row .time { color: #6b7280; font-size: 12px; margin-top: 2px; }
+
+        .refresh-activities { color: #17a34a; font-weight: 600; font-size: 13px; display: inline-flex; gap:8px; margin-top: 10px; }
+
+        /* Change password card */
+        .password-card {
+            background: white;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+            margin-top: 22px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 14px;
+            align-items: center;
+        }
+
+        /* Header inside the change-password card */
+        .password-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+            grid-column: 1 / -1;
+        }
+        .password-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: #1f2937; }
+        .password-header p { margin: 0; color: #6b7280; font-size: 13px; }
+        .password-header a { font-size: 13px; color: #0f7a34; text-decoration: none; }
+        .password-header a:hover { text-decoration: underline; }
+    
+        .password-card .field input {
+            width: 100%;
+            border: 1px solid #e6eef1;
+            padding: 10px 1px;
+            border-radius: 8px;
+        }
+
+        .btn-update-password {
+            background: #17a34a;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            justify-self: end;
+        }
+
+        /* === replace previous .profile-grid rules with a 2-column layout === */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 360px; /* left = fluid, right = fixed activity column */
+            gap: 24px;
+            width: 100%;
+            align-items: stretch; /* makes columns match height */
+            box-sizing: border-box;
+        }
+
+        /* left column wrapper holds profile + password stacked */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-height: 0; /* allows child overflow control inside flex */
+        }
+
+        /* make activity card fill the right column height */
+        .activity-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* ensure password card matches profile width inside the left column */
+        .password-card {
+            width: 100%;
+        }
+
+        /* responsive: stack on small screens */
+        @media (max-width: 980px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            .activity-card { height: auto; }
+        }
+
+        /* footer for activity card */
+        .activity-footer {
+            margin-top: auto;      /* pushes footer to bottom when parent is column flex */
+            text-align: center;
+            padding-top: 12px;
+        }
+    
+        .hidden { display: none; }
+        /* --- END OF ADMIN PROFILE SPECIFIC STYLES --- */
+
+        /* Fix: make content fill available space to the right of the fixed sidebar */
+        .content {
+            /* adjust this sidebar width if yours is different */
+            margin-left: 250px;        /* space reserved for left sidebar */
+            margin-right: 0;
+            width: calc(100% - 250px); /* fill remaining viewport width */
+            max-width: none;          /* remove any centering limit */
+            box-sizing: border-box;
+            padding-right: 20px;      /* small right gutter, optional */
+        }
+
+        /* Ensure the grid stacks and cards stretch full width */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* single stacked column */
+            gap: 20px;
+            justify-items: stretch;
+            align-items: start;
+            width: 100%;
+        }
+
+        .profile-card,
+        .password-card,
+        .activity-card {
+            width: 100%;
+            max-width: none;
+            box-sizing: border-box;
+        }
+
+        /* remove any centering rule that forces block to center */
+        .container, .main, .wrapper {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            max-width: none !important;
+        }
+
+        /* Add / replace these rules inside the existing <style> block */
+        html, body {
+          height: 100%;
+          overflow-y: auto; /* show vertical scrollbar only when needed */
+        }
+
+        /* Replace the previous html/body + main overflow rules with these */
+        html, body {
+          min-height: 100%;
+          height: auto;
+          overflow-y: auto; /* show page scrollbar only when needed */
+        }
+
+        /* Keep sidebar independently scrollable */
+        .sidebar {
+          max-height: calc(100vh - 60px);
+          overflow-y: auto;
+        }
+
+        /* Let main grow with content and not force internal scrolling */
+        main, #mainContent {
+          min-height: calc(100vh - 60px);
+          height: auto;
+          overflow: visible;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        /* Ensure container doesn't constrain page height */
+        .container {
+          min-height: 100vh;
+          height: auto;
+        }
+
+        /* Sidebar stays independently scrollable if its content overflows */
+        .sidebar {
+          overflow-y: auto;
+        }
+
+        /* Remove any aggressive !important hide rules (if present elsewhere) */
+        /* If you previously added: overflow: hidden !important; remove or override it */
+
+        /* Topbar greeting */
+        .top-greeting {
+          text-align: right;
+          color: #fff;
+          margin-right: 8px;
+        }
+        .top-greeting .greet-name {
+          font-weight: 700;
+          font-size: 14px;
+          line-height: 1;
+        }
+        .top-greeting .greet-time {
+          font-size: 12px;
+          opacity: 0.95;
+          margin-top: 2px;
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 12px;
+        }
+        /* Footer button styling: keep icon visible, hide label when collapsed */
+        .sidebar-footer .nav-item { display:flex; align-items:center; gap:12px; padding:10px; border-radius:8px; }
+        .sidebar-footer .nav-item .label { transition: opacity 0.15s ease; }
+        .sidebar.collapsed .sidebar-footer .nav-item .label { display:none; }
+        /* Ensure footer stays above overlay and doesn't block menu icon */
+        .sidebar-footer { z-index: 1000; }
+          
+    /* Profile dropdown styles (shared across pages) */
+    .profile-dropdown .profile-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 12px 34px rgba(2,6,23,0.12), 0 4px 10px rgba(2,6,23,0.06);
+      overflow: hidden;
+      animation: fadeIn .12s ease;
+      transition: transform .14s ease, box-shadow .14s ease, opacity .12s ease;
+      transform-origin: top right;
+    }
+    .profile-card-top { display:flex; justify-content:center; padding:10px 12px 4px; }
+    .avatar-large {
+      width: 120px; height:120px; border-radius:50%; background:#f3faf5; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:28px; position:relative; overflow:hidden; border:4px solid rgba(16,185,129,0.06);
+    }
+    .avatar-large img { width:100%; height:100%; object-fit:cover; display:block; transition: transform .18s ease; box-shadow: 0 6px 18px rgba(2,6,23,0.08); }
+    .avatar-large:hover img { transform: scale(1.02); }
+    .avatar-camera { position:absolute; right:4px; bottom:4px; border-radius:50%; background:#fff; border:0; width:26px; height:26px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 12px rgba(2,6,23,0.06); cursor:pointer; font-size:11px; }
+    .profile-card-body { padding: 8px 18px 12px; text-align:center; display:flex; flex-direction:column; gap:6px; }
+    .profile-email { font-size:12px; color:#6b7280; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .profile-greeting { font-weight:700; font-size:16px; margin-top:4px; color:#111827; }
+    .manage-btn { display:inline-block; width:100%; padding:8px 12px; border-radius:999px; border:1px solid rgba(16,185,129,0.12); background:#10b981; color:#fff; font-weight:700; box-shadow:none; cursor:pointer; }
+    .manage-btn:hover { transform:none; filter:brightness(.98); }
+    .profile-divider { height:1px; background:#f1f5f9; margin:8px 0; }
+    .profile-actions { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .profile-link { flex:1; text-align:left; border:0; background:transparent; padding:8px; color:#374151; font-weight:600; cursor:pointer; }
+    .signout-link { flex:1; text-align:right; border:0; background:transparent; padding:8px; color:#ef4444; font-weight:700; cursor:pointer; }
+    @media (max-width:420px) { .profile-dropdown { right:8px !important; left:8px !important; min-width:auto; } }
+    .profile-dropdown[aria-hidden="false"] .profile-card { transform: translateY(-6px); box-shadow: 0 20px 54px rgba(2,6,23,0.16), 0 6px 18px rgba(2,6,23,0.06); }
+
+    .icon-btn { background: transparent !important; border: 0 !important; outline: none !important; box-shadow: none !important; padding: 6px; display: inline-flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+    .icon-btn:focus, .icon-btn:active {
+        outline: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* popover / dropdown visibility controlled by attributes */
+    .popover { display: none; }
+    .popover[data-open="true"] { display: block; }
+    .dropdown { display: none; }
+    .dropdown[aria-hidden="false"] { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Make sidebar logout text/icon red on hover/focus and keyboard focus
+       - add smooth transition, use :focus-visible for keyboard focus, and show pointer */
+    #sidebarLogoutBtn { cursor: pointer; }
+    #sidebarLogoutBtn .label, #sidebarLogoutBtn .icon {
+        color: inherit;
+        transition: color 160ms ease-in-out, transform 120ms ease;
+    }
+    /* Hover and focus (mouse) */
+    #sidebarLogoutBtn:hover .label,
+    #sidebarLogoutBtn:hover .icon {
+        color: #ef4444 !important; /* red text/icon on hover */
+    }
+    /* Keyboard focus visible for accessibility */
+    #sidebarLogoutBtn:focus-visible .label,
+    #sidebarLogoutBtn:focus-visible .icon {
+        color: #ef4444 !important; /* red text/icon on keyboard focus */
+    }
+        
+       
+    </style>
+</head>
+<body>
+
+    <div class="header-and-sidebar-top">
+      <aside class="sidebar-top" id="sidebarTop">
+        <div class="sidebar-logo">
+          <img src="safespace.png" alt="SafeSpace Logo">
+          <span>SafeSpace</span>
+        </div>
+        <i class="material-icons menu-icon" id="menuIcon">menu</i>
+      </aside>
+      <header class="main-top-bar">
+        <h1 class="portal-title">Admin Portal</h1>
+        <div class="user-info">
+          <div class="top-greeting" aria-live="polite" style="margin-right:12px; text-align:right; color:#fff; margin-left:8px;">
+            <div id="topGreetingName" style="font-weight:700; font-size:14px;">Good Morning, Admin</div>
+            <div id="topGreetingTime" style="font-size:12px; opacity:0.95; margin-top:2px;">Tuesday, Oct 14, 2025 — 02:51 AM</div>
+          </div>
+          <div style="position:relative;display:inline-block;">
+              <button id="notifBtn" class="icon-btn" aria-expanded="false" title="Notifications" style="color:white;background:#16a34a;padding:8px;border-radius:8px;border:0;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(22,163,74,0.15);">
+                  <i class="material-icons" style="color:white;font-size:20px;">notifications</i>
+              </button>
+              <div id="notifPanel" class="popover" data-open="false" style="position:fixed;right:20px;top:62px;min-width:280px;z-index:4500;display:none;">
+                  <div class="notif-card" role="dialog" aria-label="Notifications" aria-hidden="true" style="border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(2,6,23,0.08);background:#fff;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-width:280px;">
+                                    <div class="notif-header popover-header" style="background:#10b981;color:#fff;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;">
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            <div class="notif-title" style="font-weight:700;font-size:15px;">Notifications</div>
+                                            <div id="notifTimestamp" class="notif-timestamp" style="font-size:12px;opacity:0.95;">--</div>
+                                        </div>
+                                        <div class="notif-controls" style="display:inline-flex;gap:8px;">
+                                            <button id="profileMarkAll" style="background:transparent;border:0;color:#2563eb;cursor:pointer;font-size:12px;padding:4px 6px;border-radius:6px">Mark all read</button>
+                                            <button id="profileClearAll" style="background:transparent;border:0;color:#ef4444;cursor:pointer;font-size:12px;padding:4px 6px;border-radius:6px">Clear</button>
+                                        </div>
+                                    </div>
+                      <div id="notifList" class="popover-body" style="color:#111827;padding:8px 12px;">
+                          <div class="popover-empty">No new notifications.</div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <div style="position:relative;display:inline-block;margin-left:-8px;">
+                                                                                <button id="profileBtn" class="user-avatar" aria-haspopup="true" aria-expanded="false" title="Profile" style="border:0;cursor:pointer;padding:0;position:relative;overflow:hidden;">
+                                                                                    <div id="profileBtnSpinner" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none">
+                                                                                        <svg width="28" height="28" viewBox="0 0 50 50" aria-hidden="true">
+                                                                                            <circle cx="25" cy="25" r="18" fill="#ffffff" opacity="0.2"></circle>
+                                                                                            <path fill="#10B981" d="M25 5a20 20 0 0 1 0 6a14 14 0 1 0 0 28 14 14 0 0 1 0-34">
+                                                                                                <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                                                                                            </path>
+                                                                                        </svg>
+                                                                                    </div>
+                                                                                    <div id="profileBtnDefaultIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+                                                                                        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                                            <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" fill="#9CA3AF"></path>
+                                                                                            <path d="M3 20c0-2.761 4.477-5 9-5s9 2.239 9 5v1H3v-1z" fill="#9CA3AF"></path>
+                                                                                        </svg>
+                                                                                    </div>
+                                                                                </button>
+                                                                                <div id="profileDropdown" class="dropdown profile-dropdown" aria-hidden="true" style="position:fixed;right:20px;top:62px;min-width:320px;z-index:3000;">
+                                                                                    <div style="background:#fff;border-radius:12px;padding:10px;min-width:320px;box-shadow:0 12px 30px rgba(2,6,23,0.12);font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111;">
+                                                                                        <div style="display:flex;gap:12px;align-items:center;padding:10px;border-bottom:1px solid rgba(0,0,0,0.06)">
+                                                                                            <div class="avatar-large" id="profileAvatar" style="width:80px;height:80px;border-radius:60px;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-weight:700;color:#111;font-size:18px">
+                                                                                                <!-- profile image or initial inserted by script -->
+                                                                                            </div>
+                                                                                            <div style="flex:1;min-width:0">
+                                                                                                <div id="profileGreeting" style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hi, Admin</div>
+                                                                                                <div id="profileEmail" style="font-size:13px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">you@example.com</div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div style="padding:8px 6px;display:flex;flex-direction:column;gap:6px">
+                                                                                            <button id="accountEdit" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                                                                                                <i class="material-icons icon" style="font-size:18px;line-height:1;">person</i>
+                                                                                                <span style="flex:1;text-align:left">Manage your profile</span>
+                                                                                            </button>
+                                                                                            <button id="accountSettings" class="profile-item" style="text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px">
+                                                                                                <i class="material-icons icon" style="font-size:18px;line-height:1;">settings</i>
+                                                                                                <span style="flex:1;text-align:left">Settings & privacy</span>
+                                                                                                <i class="material-icons icon" style="font-size:16px;opacity:0.7;">chevron_right</i>
+                                                                                            </button>
+                                                                                            <button id="accountLogout" class="profile-item" style="font-size:15px;text-align:left;padding:10px;border-radius:8px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;gap:10px;color:#111;font-weight:600">
+                                                                                                <i class="material-icons icon" style="font-size:18px;line-height:1;color:#ef4444">logout</i>
+                                                                                                <span style="flex:1;text-align:left">Log Out</span>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                        </div>
+      </header>
+    </div>
+    
+    <div class="container">
+        <aside class="sidebar" id="sidebar">
+            <nav class="nav-menu">
+                <nav class="nav" id="nav" style="display:flex;flex-direction:column;gap:8px;padding:12px;">
+                        <button class="nav-item" onclick="location.href='admin_dashboard.html'" data-name="Dashboard">
+                        <span class="material-icons icon" style="font-size:26px;">dashboard</span>
+                        <span class="label" style="font-size:15px;">Home</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_user_management.html'" data-name="User Management">
+                        <span class="material-icons icon" style="font-size:26px;">groups</span>
+                        <span class="label" style="font-size:15px;">Student Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_counselor_management.html'" data-name="Counselor Management">
+                        <span class="material-icons icon" style="font-size:26px;">psychology</span>
+                        <span class="label" style="font-size:15px;">Counselor Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_content_management.html'" data-name="Content Management">
+                        <span class="material-icons icon" style="font-size:26px;">description</span>
+                        <span class="label" style="font-size:15px;">Content Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_report_management.html'" data-name="Reports Management">
+                        <span class="material-icons icon" style="font-size:26px;">warning</span>
+                        <span class="label">Reports Management</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_session_report.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">fact_check</span>
+                        <span class="label">Session Reports</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_psych_test.html'" data-name="Session Reports">
+                        <span class="material-icons icon" style="font-size:26px;">assessment</span>
+                        <span class="label">Psychological Test</span>
+                    </button>
+                    <button class="nav-item" onclick="location.href='admin_settings.html'" data-name="System Settings">
+                        <span class="material-icons icon" style="font-size:26px;">settings</span>
+                        <span class="label" style="font-size:15px;">System Settings</span>
+                    </button>
+                </nav>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="nav-item" id="sidebarLogoutBtn" type="button" title="Sign out">
+                    <i class="material-icons icon" style="font-size:26px;">logout</i>
+                    <span class="label" style="font-size:15px;">Logout</span>
+                </button>
+            </div>
+        </aside>
+        
+    <main id="mainContent" class="flex-1 mt-1 p-8 bg-gray-50 min-h-screen">
+     <div class="profile-grid grid grid-cols-[auto_380px] gap-6 w-full items-start">
+  <!-- LEFT: profile + change-password stacked and same width -->
+  <div class="left-column flex flex-col space-y-6">
+    <div class="profile-card bg-white rounded-lg shadow p-6">
+                        <div class="profile-header">
+                            <div class="profile-avatar" id="profileAvatarImg">
+                                <img id="profileImagePreview" alt="Profile Image" style="display:none;">
+                                <span id="profileInitials" style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:#718096;background:transparent;"></span>
+                                <button class="edit-image-icon" id="editImageIcon" type="button" aria-label="Change profile picture">
+                                    <i class="material-icons" style="font-size:20px;">photo_camera</i>
+                                </button>
+                                <input type="file" id="profileImageInput" accept="image/*" class="hidden" aria-hidden="true" tabindex="-1">
+                            </div>
+                            <div class="profile-meta">
+                                <h2 class="profile-name"></h2>
+                                <div class="profile-role-status">
+                                    <p class="profile-role"></p>
+                                    <div class="badges">
+                                        <div class="badge badge-active"></div>
+                                        <div class="badge badge-id"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="profile-fields">
+                            <div class="field">
+                                <label>Full Name</label>
+                                <div class="detail-value" id="fullNameValue"></div>
+                            </div>
+                            <div class="field">
+                                <label>Username</label>
+                                <div class="detail-value" id="usernameValue"></div>
+                            </div>
+                            <div class="field">
+                                <label>Email</label>
+                                <div class="detail-value" id="emailValue"></div>
+                            </div>
+                            <div class="field">
+                                <label>Position</label>
+                                <div class="detail-value" id="positionValue"></div>
+                            </div>
+                            <div class="field">
+                                <label>Role</label>
+                                <div class="detail-value" id="roleValue"></div>
+                            </div>
+                            <div class="field">
+                                <label>Status</label>
+                                <div class="detail-value" id="statusValue"></div>
+                            </div>
+                            <div class="field" style="grid-column: 1 / -1;">
+                                <label>Phone</label>
+                                <div class="detail-value" id="phoneValue"></div>
+                            </div>
+                            
+                            <!-- createdAt and lastLogin are stored in DB only and not shown in UI -->
+                        </div>
+
+                        <div class="save-changes-wrap">
+                            <button class="btn-save-changes" id="editProfileBtn">Save Changes</button>
+                        </div>
+                    </div>
+
+    <div class="password-card bg-white rounded-lg shadow p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-center" aria-label="Change Password">
+      <div class="password-header">
+        <div>
+          <h3>Change Password</h3>
+          <p>Update your account password</p>
+        </div>
+    <a href="#" id="forgotPasswordLink">Forgot password?</a>
+      </div>
+
+            <div>
+                <label class="text-sm text-gray-600">Current Password</label>
+                <input id="currentPassword" type="password" placeholder="Enter current password" class="border border-gray-200 rounded-md p-2 w-full">
+            </div>
+            <div>
+                <label class="text-sm text-gray-600">New Password</label>
+                <input id="newPassword" type="password" placeholder="Enter new password" class="border border-gray-200 rounded-md p-2 w-full">
+            </div>
+            <div>
+                <label class="text-sm text-gray-600">Confirm New Password</label>
+                <input id="confirmNewPassword" type="password" placeholder="Re-enter new password" class="border border-gray-200 rounded-md p-2 w-full">
+            </div>
+            <div class="flex md:justify-end">
+                <button id="updatePasswordBtn" class="btn-update-password bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">Update Password</button>
+            </div>
+            <div id="passwordMsg" style="margin-top:8px;font-size:13px;color:#333"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: activity column (fixed width, full height) -->
+  <aside class="activity-card bg-white rounded-lg shadow p-6 h-full">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800">Recent Activity <span class="ml-1">📊</span></h3>
+        <p class="text-sm text-gray-500 mt-1">Shows last logins, profile edits, or actions.</p>
+      </div>
+    </div>
+
+        <div class="mt-4">
+            <div id="activityList" class="activity-list">
+                <!-- dynamically rendered recent activity items will appear here -->
+            </div>
+        </div>
+
+        <div class="activity-footer">
+            <a href="#" id="refreshActivitiesBtn" class="refresh-activities inline-flex items-center gap-2 text-green-600 font-semibold">🔄 Refresh Activities</a>
+        </div>
+  </aside>
+</div>
+    </main>
+    </div>
+        <!-- Crop Modal (hidden by default) -->
+        <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Crop Photo</h3>
+                    <button id="closeCropModal" class="text-gray-400 hover:text-gray-600 text-2xl p-1">&times;</button>
+                </div>
+                <div class="relative mb-6">
+                    <div id="cropContainer" class="relative w-full h-96 mx-auto bg-gray-200 rounded-lg overflow-hidden">
+                        <img id="cropImage" class="max-w-full h-auto" style="display:block;" alt="To crop">
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2 text-center">Drag to adjust. The result will be a circular profile image.</p>
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button id="cropCancelBtn" class="px-6 py-2.5 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium">Cancel</button>
+                    <button id="cropApplyBtn" class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">Apply</button>
+                </div>
+            </div>
+        </div>
+                <!-- Confirm Modal used for important actions (crop save confirmation) -->
+                <div id="confirmModalCrop" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3000">
+                    <div style="background:#fff;border-radius:12px;padding:18px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+                        <h3 id="confirmModalCropTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm</h3>
+                        <div id="confirmModalCropMessage" style="font-size:15px;margin-bottom:12px;color:#111">Are you sure you want to apply and save this cropped photo?</div>
+                        <div style="display:flex;gap:8px;justify-content:flex-end">
+                            <button id="confirmModalCropCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                            <button id="confirmModalCropOk" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Password reset modal (in-page, avoids browser confirm/alert) -->
+                <div id="passwordResetModal" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3200">
+                    <div style="background:#fff;border-radius:12px;padding:18px;max-width:520px;width:94%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+                        <h3 style="margin:0 0 8px 0;font-size:16px;font-weight:700">Send password reset</h3>
+                        <div id="passwordResetModalMsg" style="font-size:15px;margin-bottom:12px;color:#111">Send password reset email?</div>
+                        <div style="display:flex;gap:8px;justify-content:flex-end">
+                            <button id="passwordResetCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                            <button id="passwordResetSend" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Send reset email</button>
+                        </div>
+                    </div>
+                </div>
+    
+    <script type="module">
+        import { db, ref, get, set, update, auth, onAuthStateChanged } from './admin_main.js';
+        // Load adminProfile into the UI when available
+        function populateProfileUI(profile) {
+            if (!profile) return;
+            document.getElementById('fullNameValue').textContent = profile.fullname || profile.username || '';
+            document.getElementById('usernameValue').textContent = profile.username || '';
+            document.getElementById('emailValue').textContent = profile.email || '';
+            document.getElementById('positionValue').textContent = profile.position || '';
+            document.getElementById('roleValue').textContent = profile.role || '';
+            document.getElementById('statusValue').textContent = profile.status || '';
+            document.getElementById('phoneValue').textContent = profile.phone || '';
+            const profileNameEl = document.querySelector('.profile-name');
+            if (profileNameEl && profile.fullname) profileNameEl.textContent = profile.fullname;
+            // show Position in the header as the profile-role
+            const profileRoleEl = document.querySelector('.profile-role');
+            if (profileRoleEl) profileRoleEl.textContent = profile.position || profile.role || '';
+            // show status in the badge area
+            const badgeActiveEl = document.querySelector('.badge-active');
+            if (badgeActiveEl) badgeActiveEl.textContent = profile.status || '';
+            // Highlight role text if it contains 'admin' or 'administrator'
+            const roleText = (profile.position || profile.role || '').toLowerCase();
+            if (profileRoleEl) {
+                if (roleText.indexOf('admin') !== -1 || roleText.indexOf('administrator') !== -1) {
+                    profileRoleEl.classList.add('role-highlight');
+                } else {
+                    profileRoleEl.classList.remove('role-highlight');
+                }
+            }
+            // optionally show ID if available
+
+                // Wire header control buttons (Mark all read / Clear) if present
+                try {
+                    const markBtn = document.getElementById('profileMarkAll');
+                    const clearBtn = document.getElementById('profileClearAll');
+                    if (markBtn) {
+                        markBtn.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            try { await window.markAllNotificationsRead(); if (typeof showToast === 'function') showToast('All notifications marked read'); } catch(err){ console.debug('markAll read err', err); if (typeof showToast === 'function') showToast('Unable to mark read'); }
+                        });
+                    }
+                    if (clearBtn) {
+                        clearBtn.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            if (!confirm('Clear all notifications?')) return;
+                            try { await window.clearAllNotifications(); if (typeof showToast === 'function') showToast('Notifications cleared'); } catch(err){ console.debug('clear notif err', err); if (typeof showToast === 'function') showToast('Unable to clear'); }
+                        });
+                    }
+                } catch(e) { console.debug('wire profile notif controls', e); }
+            const badgeIdEl = document.querySelector('.badge-id');
+            if (badgeIdEl) {
+                if (profile.id) {
+                    badgeIdEl.textContent = 'ID: ' + profile.id;
+                    badgeIdEl.style.display = 'inline-flex';
+                } else {
+                    badgeIdEl.textContent = '';
+                    badgeIdEl.style.display = 'none';
+                }
+            }
+            // avatar (use profileImage if present)
+            if (profile.profileImage) {
+                const img = document.getElementById('profileImagePreview');
+                img.src = profile.profileImage;
+                img.style.display = 'block';
+                document.getElementById('profileInitials').style.display = 'none';
+                updateProfileAvatar(profile.fullname || profile.username || '', profile.profileImage);
+            }
+        }
+
+        // If adminProfile already loaded on window, populate immediately
+        if (window.adminProfile) populateProfileUI(window.adminProfile);
+        // Also listen for auth state to populate once admin_profile_loader sets window.adminProfile
+        onAuthStateChanged(auth, (user) => {
+            if (!user) return;
+            // Poll for window.adminProfile (it will be set by loader) for up to a short timeout
+            const start = Date.now();
+            const poll = setInterval(() => {
+                if (window.adminProfile) {
+                    populateProfileUI(window.adminProfile);
+                    clearInterval(poll);
+                }
+                if (Date.now() - start > 3000) clearInterval(poll);
+            }, 200);
+        });
+
+        // Save changes to Realtime Database under admins/{uid}
+        async function saveProfileToDb() {
+            const uid = window.adminProfile && window.adminProfile.uid;
+            if (!uid) {
+                alert('Unable to determine admin uid. Please refresh and try again.');
+                return;
+            }
+
+            // helper to read value whether element is div.detail-value or input.detail-input
+            function getFieldValue(id) {
+                const el = document.getElementById(id);
+                if (!el) return '';
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return el.value.trim();
+                return el.textContent.trim();
+            }
+
+            // Collect old values for audit
+            const oldProfile = window.adminProfile ? { ...window.adminProfile } : {};
+            const payload = {
+                fullname: getFieldValue('fullNameValue'),
+                username: getFieldValue('usernameValue'),
+                email: getFieldValue('emailValue'),
+                position: getFieldValue('positionValue'),
+                role: getFieldValue('roleValue'),
+                status: getFieldValue('statusValue'),
+                phone: getFieldValue('phoneValue'),
+                profileImage: (document.getElementById('profileImagePreview') && document.getElementById('profileImagePreview').src && document.getElementById('profileImagePreview').src.indexOf('placeholder') === -1)
+                    ? document.getElementById('profileImagePreview').src
+                    : ''
+            };
+
+            // Determine changed fields
+            const changedFields = {};
+            Object.keys(payload).forEach(key => {
+                if ((oldProfile[key] || '') !== (payload[key] || '')) {
+                    changedFields[key] = { from: oldProfile[key] || '', to: payload[key] || '' };
+                }
+            });
+
+            try {
+                await update(ref(db, `admins/${uid}`), payload);
+                Object.assign(window.adminProfile || {}, payload);
+                const newName = payload.fullname || payload.username || '';
+                if (newName) {
+                    const profileNameEl = document.querySelector('.profile-name');
+                    if (profileNameEl) profileNameEl.textContent = newName;
+                }
+                updateProfileAvatar(newName, payload.profileImage);
+                showToast('Profile saved to database.');
+                // Attach changedFields to window for audit logging
+                window._lastProfileChangedFields = changedFields;
+            } catch (err) {
+                console.error('Error saving profile', err);
+                alert('Failed to save profile: ' + err.message);
+            }
+        }
+
+        // expose save function globally in case other UI uses it
+        window.saveProfileToDb = saveProfileToDb;
+
+      
+        // --------------------------
+        // Recent Activity: loader
+        // --------------------------
+        // reads admin_audit_logs/{category}/{uid} and renders latest items
+        async function fetchAuditCategory(uid, category) {
+            try {
+                const snap = await get(ref(db, `admin_audit_logs/${category}/${uid}`));
+                if (!snap.exists()) return [];
+                const val = snap.val();
+                console.log('[AUDIT FETCH] category=', category, 'uid=', uid, 'raw=', val);
+                // val is keyed by timestamp or push id; normalize to array
+                return Object.keys(val).map(k => Object.assign({ _key: k }, val[k]));
+            } catch (err) {
+                console.error('fetchAuditCategory error', category, err);
+                return [];
+            }
+        }
+
+        function iconForType(type) {
+            if (!type) return '🔔';
+            if (type === 'login') return '🔒';
+            if (type === 'profile_update') return '✏️';
+            if (type === 'password_change') return '🔑';
+            if (type === 'password_reset') return '✉️';
+            return '🔔';
+        }
+
+        // Return a CSS class for the icon color based on event type
+        function iconClassForType(type) {
+            if (!type) return 'green';
+            const t = String(type).toLowerCase();
+            if (t.indexOf('profile') !== -1) return 'green';
+            if (t.indexOf('password') !== -1) return 'green';
+            if (t.indexOf('login') !== -1) return 'purple';
+            if (t.indexOf('file') !== -1 || t.indexOf('upload') !== -1) return 'blue';
+            if (t.indexOf('student') !== -1) return 'teal';
+            return 'green';
+        }
+
+        // Mirror profile audit items into client-side recent activity storage so the
+        // dashboard Recent System Activity card can render the same items (key:
+        // `admin_recent_activity`). Keeps newest-first order and caps to 20 items.
+        function mirrorProfileActivitiesToLocal(allItems, limit = 8) {
+            try {
+                if (!allItems || !Array.isArray(allItems)) return;
+                const STORAGE_KEY = 'admin_recent_activity';
+                const items = (allItems || []).slice(0, limit).map(it => {
+                    const time = it.timestamp || it.ts || it.createdAt || it.time || new Date().toISOString();
+                    const title = it.title || it.message || it.action || (it.type ? String(it.type).replace(/_/g, ' ') : 'Activity');
+                    return { text: String(title), ts: time, icon: iconForType(it.type) };
+                });
+
+                // load existing
+                let existing = [];
+                try { const raw = localStorage.getItem(STORAGE_KEY); existing = raw ? JSON.parse(raw) || [] : []; } catch(e){ existing = []; }
+
+                const merged = [];
+                // add newest items first
+                for (const it of items) {
+                    if (!merged.find(x => x.ts === it.ts && x.text === it.text)) merged.push(it);
+                }
+                // append existing, skipping duplicates
+                for (const it of existing) {
+                    if (!merged.find(x => x.ts === it.ts && x.text === it.text)) merged.push(it);
+                }
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged.slice(0,20))); } catch(e){}
+            } catch(err) { console.debug('mirrorProfileActivitiesToLocal failed', err); }
+        }
+
+        function renderActivityItems(items) {
+            const container = document.getElementById('activityList');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!items || items.length === 0) {
+                container.innerHTML = `<div class="flex items-start bg-gray-50 rounded-md p-3"><div class="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm mr-3">ℹ️</div><div class="flex-1"><div class="font-medium text-gray-800">No recent activity</div><div class="text-xs text-gray-500">No events found</div></div></div>`;
+                return;
+            }
+            for (const it of items) {
+                const time = it.timestamp || it.ts || it.createdAt || it.time || new Date().toISOString();
+                const dateText = new Date(time).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const title = it.title || it.message || it.action || (it.type ? it.type.replace('_', ' ') : 'Activity');
+                let iconHtml = '';
+                // Unified icon logic for dashboard/profile
+                if (title && (/download|export/i).test(title)) {
+                    iconHtml = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="6" fill="#22c55e"/><path d="M12 7v6m0 0l-3-3m3 3l3-3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="7" y="17" width="10" height="2" rx="1" fill="#fff"/></svg>';
+                } else if (title && /uploaded/i.test(title)) {
+                    iconHtml = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="6" fill="#38bdf8"/><path d="M12 17V7" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M8 11l4-4 4 4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+                } else if (title && /added/i.test(title)) {
+                    iconHtml = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="6" fill="#818cf8"/><path d="M12 7v10M7 12h10" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>';
+                } else if (title && /updated/i.test(title)) {
+                    iconHtml = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75l11.06-11.06a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0L3 17.25z" fill="#10b981"/><path d="M14.06 7.94l2.34 2.34" stroke="#fff" stroke-width="2"/></svg>';
+                } else if (title && (/delete|deleted|removed|trash|garbage/i).test(title)) {
+                    iconHtml = '<span style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;background:#f7f8fa;border-radius:10px;"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="12" width="16" height="12" rx="3" fill="#ef4444"/><rect x="13" y="6" width="6" height="4" rx="2" fill="#ef4444"/><rect x="6" y="12" width="20" height="3" fill="#b91c1c"/><rect x="12" y="16" width="2" height="6" rx="1" fill="#fff"/><rect x="18" y="16" width="2" height="6" rx="1" fill="#fff"/></svg></span>';
+                } else if (title && /interact|interacted/i.test(title)) {
+                    // Interacted icon (yellow clock)
+                    iconHtml = '<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:#f7f8fa;border-radius:8px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="6" fill="#fbbf24"/><circle cx="12" cy="12" r="7" stroke="#fff" stroke-width="2"/><path d="M12 8v4l3 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+                } else if (title && title.match(/\.png/i)) {
+                    iconHtml = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" fill="#90caf9"/><circle cx="8" cy="8" r="2" fill="#fff"/><path d="M21 21L15 13L9 21H21Z" fill="#fff"/></svg>';
+                } else {
+                    iconHtml = escapeHtml(it.icon || '🔔');
+                }
+                let detailsHtml = '';
+                if (it.type === 'profile_update' && it.details) {
+                    detailsHtml = `<div class="text-xs text-gray-600 mt-1">${escapeHtml(it.details)}</div>`;
+                }
+                const el = document.createElement('div');
+                el.className = 'flex items-start bg-gray-50 rounded-md p-3';
+                el.innerHTML = `<span class="activity-icon mr-3" style="display:inline-flex;align-items:center;margin-top:2px;">${iconHtml}</span>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">${escapeHtml(title)}</div>
+                            <div class="text-xs text-gray-500">${escapeHtml(dateText)}</div>
+                            ${detailsHtml}
+                        </div>`;
+                container.appendChild(el);
+            }
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; });
+        }
+
+        async function loadRecentActivity(limit = 8) {
+            try {
+                const uid = window.adminProfile && window.adminProfile.uid;
+                if (!uid) {
+                    renderActivityItems([]);
+                    return;
+                }
+                // fetch categories in parallel
+                const [logins, profileUpdates, passwordChanges] = await Promise.all([
+                    fetchAuditCategory(uid, 'logins'),
+                    fetchAuditCategory(uid, 'profile_updates'),
+                    fetchAuditCategory(uid, 'password_changes')
+                ]);
+                console.log('[AUDIT LOAD] fetched counts', { logins: (logins||[]).length, profileUpdates: (profileUpdates||[]).length, passwordChanges: (passwordChanges||[]).length });
+                // normalize keys and timestamps
+                let all = [].concat(logins || [], profileUpdates || [], passwordChanges || []);
+                // Also include any client-side/dashboard items stored in localStorage
+                try {
+                    const rawLocal = localStorage.getItem('admin_recent_activity');
+                    if (rawLocal) {
+                        const localArr = JSON.parse(rawLocal);
+                        if (Array.isArray(localArr) && localArr.length > 0) {
+                            const mapped = localArr.map(it => ({
+                                // map to a shape compatible with renderActivityItems
+                                type: it.type || 'client',
+                                title: it.text || it.title || '',
+                                timestamp: it.ts || it.t || new Date().toISOString(),
+                                // keep original for possible detail use
+                                _client: true
+                            }));
+                            all = all.concat(mapped);
+                        }
+                    }
+                } catch (e) { console.debug('failed to merge local activities', e); }
+
+                all.sort((a,b) => (new Date(b.timestamp || b.ts || b.createdAt || b.time || 0)) - (new Date(a.timestamp || a.ts || a.createdAt || a.time || 0)));
+                console.log('[AUDIT LOAD] merged items', all.slice(0, limit));
+                renderActivityItems(all.slice(0, limit));
+                // Mirror profile audit items to client recent-activity storage so
+                // the dashboard Recent System Activity list can include them.
+                try { mirrorProfileActivitiesToLocal(all, limit); } catch(e) { console.debug('mirror call failed', e); }
+            } catch (err) {
+                console.error('loadRecentActivity error', err);
+                renderActivityItems([]);
+            }
+        }
+
+        // wire Refresh link
+        const refreshBtn = document.getElementById('refreshActivitiesBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                refreshBtn.disabled = true;
+                refreshBtn.style.opacity = 0.6;
+                console.log('[REFRESH] Loading recent activity...');
+                await loadRecentActivity();
+                showToast('Activities refreshed!');
+                refreshBtn.disabled = false;
+                refreshBtn.style.opacity = 1;
+                console.log('[REFRESH] Activity reload complete.');
+            });
+        }
+
+        // refresh after profile save
+        const origSave = window.saveProfileToDb;
+        window.saveProfileToDb = async function() {
+            await origSave();
+            try {
+                // write a profile update audit entry (client-side). For production, use server-side logging.
+                const uid = window.adminProfile && window.adminProfile.uid;
+                if (uid) {
+                    const ts = new Date().toISOString();
+                    const changedFields = window._lastProfileChangedFields || {};
+                    let details = '';
+                    const changedKeys = Object.keys(changedFields);
+                    if (changedKeys.length > 0) {
+                        details = changedKeys.map(k => `${k}: '${changedFields[k].from}' → '${changedFields[k].to}'`).join(', ');
+                    } else {
+                        details = 'No fields changed';
+                    }
+                    const payload = {
+                        type: 'profile_update',
+                        title: 'Updated profile information',
+                        details: details,
+                        changedFields: changedFields,
+                        timestamp: ts,
+                        by: uid
+                    };
+                    const auditPath = `admin_audit_logs/profile_updates/${uid}/${Date.now()}`;
+                    await set(ref(db, auditPath), payload);
+                    console.log('[AUDIT LOG] Wrote profile update:', auditPath, payload);
+                }
+            } catch (err) { console.error('audit write failed', err); }
+            // Notifications for profile updates suppressed on this page (audit log retained)
+            // Mirror an immediate client-side activity entry so the dashboard
+            // reflects the change without waiting for server audit propagation,
+            // then reload activities (which also calls the mirror helper).
+            try {
+                const STORAGE_KEY = 'admin_recent_activity';
+                const now = new Date().toISOString();
+                const title = 'Updated profile information';
+                let existing = [];
+                try { const raw = localStorage.getItem(STORAGE_KEY); existing = raw ? JSON.parse(raw) || [] : []; } catch(e){ existing = []; }
+                const newEntry = { text: String(title), ts: now, icon: '✏️' };
+                const merged = [newEntry];
+                for (const it of existing) {
+                    if (!(it && it.ts === newEntry.ts && it.text === newEntry.text)) merged.push(it);
+                }
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(merged.slice(0,20))); } catch(e){}
+            } catch(e) { console.debug('immediate local push failed', e); }
+            // reload activities (this will also mirror fetched audit items)
+            loadRecentActivity();
+        };
+
+        // Initial load once profile is available
+        if (window.adminProfile) loadRecentActivity();
+        // Also reload when adminProfile is set elsewhere
+        window.addEventListener('adminProfileLoaded', () => loadRecentActivity());
+
+        // NEW SIDEBAR JAVASCRIPT LOGIC (COPIED FROM settings.html)
+        const menuIcon = document.getElementById('menuIcon');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarTop = document.getElementById('sidebarTop');
+        
+    // ORIGINAL/UPDATED ADMIN PROFILE JAVASCRIPT LOGIC
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    // fields that will become editable (createdAt and lastLogin are read-only in DB)
+    const editableFieldIds = ['fullNameValue','usernameValue','emailValue','positionValue','roleValue','statusValue','phoneValue'];
+    const profileName = document.querySelector('.profile-name');
+        // For image avatar
+        const profileImagePreview = document.getElementById('profileImagePreview');
+        const profileImageInput = document.getElementById('profileImageInput');
+        const editImageIcon = document.getElementById('editImageIcon');
+        const profileInitials = document.getElementById('profileInitials');
+        
+        // Edit icon opens file picker
+        if (editImageIcon && profileImageInput) {
+            editImageIcon.addEventListener('click', function(e) {
+                profileImageInput.click();
+            });
+        }
+
+        // Inline edit mode for profile fields
+        let isEditing = false;
+        // ensure button has sensible initial label
+        if (editProfileBtn) editProfileBtn.textContent = 'Edit Profile';
+
+        function enterEditMode() {
+            editableFieldIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const value = el.innerText || el.textContent || '';
+                const input = document.createElement('input');
+                input.type = id === 'emailValue' ? 'email' : (id === 'phoneValue' ? 'tel' : 'text');
+                input.value = value.trim();
+                input.className = 'detail-input';
+                input.style.width = '100%';
+                input.style.padding = '8px 10px';
+                input.style.border = '1px solid #e6eef1';
+                input.style.borderRadius = '8px';
+                el.replaceWith(input);
+                input.id = id; // keep same id for easy lookup
+            });
+            if (editProfileBtn) editProfileBtn.textContent = 'Save Changes';
+            isEditing = true;
+        }
+
+        function exitEditMode(save) {
+            editableFieldIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const value = (el.tagName === 'INPUT') ? el.value : el.innerText;
+                const div = document.createElement('div');
+                div.className = 'detail-value';
+                div.id = id;
+                div.textContent = value;
+                el.replaceWith(div);
+            });
+            // If saved, reflect name change in header and avatar initials
+            const newNameEl = document.getElementById('fullNameValue');
+            if (save && newNameEl && profileName) {
+                profileName.innerText = newNameEl.innerText;
+                updateProfileAvatar(newNameEl.innerText, profileImagePreview.src);
+                showToast('Profile updated successfully!');
+            }
+            if (editProfileBtn) editProfileBtn.textContent = 'Edit Profile';
+            isEditing = false;
+        }
+
+        if (editProfileBtn) {
+            editProfileBtn.addEventListener('click', async () => {
+                if (!isEditing) {
+                    enterEditMode();
+                } else {
+                    // Show confirmation modal before saving changes
+                    const confirmModal = document.getElementById('confirmModalCrop');
+                    const confirmOk = document.getElementById('confirmModalCropOk');
+                    const confirmCancel = document.getElementById('confirmModalCropCancel');
+                    if (!confirmModal || !confirmOk || !confirmCancel) {
+                        // Fallback: proceed directly
+                        exitEditMode(true);
+                        await saveProfileToDb();
+                        return;
+                    }
+
+                    // Update message/title for this context
+                    const msgEl = document.getElementById('confirmModalCropMessage');
+                    const titleEl = document.getElementById('confirmModalCropTitle');
+                    if (msgEl) msgEl.textContent = 'Are you sure you want to save profile changes?';
+                    if (titleEl) titleEl.textContent = 'Confirm Save';
+
+                    confirmModal.style.display = 'flex';
+
+                    function cleanup() {
+                        confirmModal.style.display = 'none';
+                        confirmOk.removeEventListener('click', onOk);
+                        confirmCancel.removeEventListener('click', onCancel);
+                    }
+
+                    async function onOk() {
+                        cleanup();
+                        // apply exit edit and save
+                        exitEditMode(true);
+                        try {
+                            await saveProfileToDb();
+                        } catch (err) {
+                            console.error('Error saving profile after confirm', err);
+                        }
+                    }
+
+                    function onCancel() {
+                        cleanup();
+                        // do nothing, keep editing state
+                    }
+
+                    confirmOk.addEventListener('click', onOk);
+                    confirmCancel.addEventListener('click', onCancel);
+                }
+            });
+        }
+
+
+        // Profile image change and preview
+        function getInitials(name) {
+            if (!name) return '';
+            const parts = name.trim().split(' ');
+            if (parts.length === 1) return parts[0][0].toUpperCase();
+            return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+        }
+
+        /**
+         * UPDATED LOGIC HERE: Corrected the condition to properly display the image when a new one is selected.
+         */
+        function updateProfileAvatar(name, imageUrl) {
+            // Update profile card avatar
+            if (imageUrl && imageUrl !== '' && imageUrl !== 'https://via.placeholder.com/120') {
+                profileImagePreview.src = imageUrl;
+                profileImagePreview.style.display = 'block';
+                profileInitials.style.display = 'none';
+            } else {
+                profileImagePreview.style.display = 'none';
+                profileInitials.textContent = getInitials(name);
+                profileInitials.style.display = 'flex';
+            }
+
+            // Update top bar avatar (compatible with spinner+silhouette pattern)
+            const topBarUserAvatar = document.getElementById('topBarUserAvatar') || document.querySelector('.main-top-bar .user-avatar') || document.querySelector('.user-avatar');
+            if (topBarUserAvatar) {
+                // Ensure container positioning for overlays
+                try { topBarUserAvatar.style.position = topBarUserAvatar.style.position || 'relative'; topBarUserAvatar.style.overflow = 'hidden'; } catch(_){}
+                if (imageUrl && imageUrl !== '' && imageUrl !== 'https://via.placeholder.com/120') {
+                    // Show image element inside the avatar and hide the default silhouette if present
+                    try { const def = topBarUserAvatar.querySelector('#profileBtnDefaultIcon'); if (def) def.style.display = 'none'; } catch(_){}
+                    let img = topBarUserAvatar.querySelector('img');
+                    if (!img) {
+                        img = document.createElement('img');
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.borderRadius = '50%';
+                        img.style.objectFit = 'cover';
+                        img.style.display = 'block';
+                        topBarUserAvatar.appendChild(img);
+                    }
+                    img.src = imageUrl;
+                    img.alt = name || 'Avatar';
+                    img.style.display = 'block';
+                } else {
+                    // No photo: show default silhouette icon (do not write initials into the small top avatar)
+                    try { const def = topBarUserAvatar.querySelector('#profileBtnDefaultIcon'); if (def) def.style.display = 'flex'; } catch(_){}
+                    const img = topBarUserAvatar.querySelector('img'); if (img) { img.src = ''; img.style.display = 'none'; }
+                }
+            }
+        }
+
+        // Initial avatar setup (use safe DOM lookups)
+        (function(){
+            const fn = document.getElementById('fullNameValue');
+            const nameText = (fn && fn.innerText) ? fn.innerText : (profileName ? profileName.innerText : '');
+            const imgSrc = (profileImagePreview && profileImagePreview.src) ? profileImagePreview.src : '';
+            updateProfileAvatar(nameText, imgSrc);
+        })();
+
+        // Cropper integration: open crop modal when a file is selected
+        (function setupCropperFlow(){
+            const cropModalEl = document.getElementById('cropModal');
+            const cropImageEl = document.getElementById('cropImage');
+            const cropApplyBtn = document.getElementById('cropApplyBtn');
+            const cropCancelBtn = document.getElementById('cropCancelBtn');
+            const closeCropBtn = document.getElementById('closeCropModal');
+            let cropperInstance = null;
+
+            function openCropModal(imageSrc){
+                if (!cropModalEl) return;
+                cropImageEl.src = imageSrc;
+                cropModalEl.classList.remove('hidden');
+                cropModalEl.classList.add('flex');
+
+                // Give image a moment to load
+                setTimeout(() => {
+                    try { if (cropperInstance) cropperInstance.destroy(); } catch(_){}
+                    cropperInstance = new Cropper(cropImageEl, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        autoCropArea: 0.8,
+                        background: false,
+                        responsive: true,
+                        guides: false,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                }, 120);
+            }
+
+            function closeCropModal(){
+                try { if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; } } catch(_){}
+                if (!cropModalEl) return;
+                cropModalEl.classList.add('hidden');
+                cropModalEl.classList.remove('flex');
+                // reset file input so same file can be chosen again
+                try { profileImageInput.value = ''; } catch(_){}
+            }
+
+            // wire file input to open crop modal
+            if (profileImageInput) {
+                profileImageInput.addEventListener('change', function(e){
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    if (!file.type || !file.type.startsWith('image/')) { alert('Please select an image file'); profileImageInput.value = ''; return; }
+                    if (file.size > 5 * 1024 * 1024) { alert('Please select an image smaller than 5MB'); profileImageInput.value = ''; return; }
+                    const reader = new FileReader();
+                    reader.onload = function(evt){
+                        openCropModal(evt.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            // cancel/close handlers
+            cropCancelBtn?.addEventListener('click', () => { closeCropModal(); });
+            closeCropBtn?.addEventListener('click', () => { closeCropModal(); });
+
+            // apply crop and set preview + show confirmation modal
+            cropApplyBtn?.addEventListener('click', async () => {
+                if (!cropperInstance) return;
+
+                // prepare cropped data but do not save yet
+                const canvas = cropperInstance.getCroppedCanvas({ width: 320, height: 320 });
+                const circular = document.createElement('canvas');
+                const ctx = circular.getContext('2d');
+                circular.width = 320; circular.height = 320;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(160,160,160,0,Math.PI*2,true);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(canvas, 0, 0, 320, 320);
+                ctx.restore();
+                const dataUrl = circular.toDataURL('image/png', 0.92);
+
+                // show confirmation modal
+                const confirmModal = document.getElementById('confirmModalCrop');
+                const confirmOk = document.getElementById('confirmModalCropOk');
+                const confirmCancel = document.getElementById('confirmModalCropCancel');
+
+                function cleanupConfirm() {
+                    confirmModal.style.display = 'none';
+                    confirmOk.removeEventListener('click', onOk);
+                    confirmCancel.removeEventListener('click', onCancel);
+                }
+
+                function onOk() {
+                    cleanupConfirm();
+                    // apply preview and save
+                    (async () => {
+                        cropApplyBtn.disabled = true;
+                        try {
+                            if (profileImagePreview) {
+                                profileImagePreview.src = dataUrl;
+                                profileImagePreview.style.display = 'block';
+                                profileInitials.style.display = 'none';
+                            }
+                            await saveProfileToDb();
+                            showToast('Cropped image saved');
+                        } catch (err) {
+                            console.error('Error saving cropped image', err);
+                            alert('Failed saving image: ' + (err.message || err));
+                        } finally {
+                            cropApplyBtn.disabled = false;
+                            closeCropModal();
+                        }
+                    })();
+                }
+
+                function onCancel() {
+                    cleanupConfirm();
+                }
+
+                // show and wire
+                confirmModal.style.display = 'flex';
+                confirmOk.addEventListener('click', onOk);
+                confirmCancel.addEventListener('click', onCancel);
+            });
+        })();
+
+        // Toast notification logic
+        function showToast(message) {
+            if (window.DISABLE_TOASTS) return;
+            let toast = document.getElementById('profileToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'profileToast';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '30px';
+                toast.style.right = '30px';
+                toast.style.background = '#1e8e3e';
+                toast.style.color = 'white';
+                toast.style.padding = '16px 28px';
+                toast.style.borderRadius = '8px';
+                toast.style.fontSize = '16px';
+                toast.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+                toast.style.zIndex = '9999';
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.4s';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 2200);
+        }
+
+
+        // Create overlay for mobile (COPIED FROM settings.html)
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+        
+        // Mobile detection (COPIED FROM settings.html)
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Toggle sidebar with mobile responsiveness (COPIED FROM settings.html)
+        menuIcon.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (isMobile()) {
+                // Mobile behavior - overlay sidebar
+                const isOpen = sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active', isOpen);
+                document.body.style.overflow = isOpen ? 'hidden' : '';
+            } else {
+                // Desktop behavior - collapse sidebar
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            }
+        });
+        
+        // Close mobile sidebar when clicking overlay (COPIED FROM settings.html)
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+        
+        // Handle window resize (COPIED FROM settings.html)
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                // Reset mobile states when switching to desktop
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                // Ensure desktop state is consistent
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                mainContent.classList.toggle('shifted', isCollapsed);
+                sidebarTop.classList.toggle('collapsed', isCollapsed);
+            } else {
+                // Reset desktop states when switching to mobile
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+        
+        // Close mobile sidebar when clicking a menu item (COPIED FROM settings.html)
+        document.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', () => {
+                if (isMobile()) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+        
+        // Initialize state for desktop on load (COPIED FROM settings.html)
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isMobile()) {
+                // Default to uncollapsed on desktop 
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('shifted');
+                sidebarTop.classList.remove('collapsed');
+            }
+        });
+
+        // Top-right interactions: notifications & profile dropdown (copied from counselor management)
+                (function topRightInteractions(){
+                    const notifBtn = document.getElementById('notifBtn') || null;
+                    const notifPanel = document.getElementById('notifPanel') || null;
+                    const profileBtn = document.getElementById('profileBtn');
+                    const profileDropdown = document.getElementById('profileDropdown');
+                    const accountEdit = document.getElementById('accountEdit');
+                    const accountSettings = document.getElementById('accountSettings');
+                    const accountLogout = document.getElementById('accountLogout');
+
+                    function closeAll() {
+                        if (notifPanel) { notifPanel.setAttribute('data-open','false'); notifBtn && notifBtn.setAttribute('aria-expanded','false'); }
+                        if (profileDropdown) { profileDropdown.setAttribute('aria-hidden','true'); profileBtn && profileBtn.setAttribute('aria-expanded','false'); }
+                    }
+
+                    // wire profile button toggle
+                    profileBtn?.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const open = profileDropdown?.getAttribute('aria-hidden') === 'false';
+                        closeAll();
+                        if (!open && profileDropdown) { profileDropdown.setAttribute('aria-hidden','false'); profileBtn.setAttribute('aria-expanded','true'); }
+                    });
+
+                    document.addEventListener('click', (ev) => {
+                        if (!ev.target.closest('#notifPanel') && !ev.target.closest('#notifBtn') && !ev.target.closest('#profileDropdown') && !ev.target.closest('#profileBtn')) {
+                            closeAll();
+                        }
+                    }, { capture: true });
+
+                    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeAll(); });
+
+                    accountEdit?.addEventListener('click', () => { closeAll(); try { /* open profile edit if available */ const editBtn = document.getElementById('editProfileBtn'); if(editBtn) editBtn.click(); } catch(e){ console.warn(e); } });
+                    accountSettings?.addEventListener('click', () => { closeAll(); window.location.href = 'settings.html'; });
+                    accountLogout?.addEventListener('click', () => { closeAll(); try { localStorage.removeItem('authToken'); } catch(e){} window.location.href = 'login.html'; });
+
+                    // Quick synchronous attempt to populate avatar/greeting/email if profile already loaded
+                    try {
+                        const topAvatar = document.querySelector('.main-top-bar .user-avatar') || document.getElementById('profileBtn');
+                        const dropdownAvatar = document.querySelector('.avatar-large') || null;
+                        const emailEl = document.getElementById('profileEmail');
+                        const greetEl = document.getElementById('topGreetingName');
+                        const displayName = window.adminDisplayName || '';
+                        if (window.adminProfile) {
+                            const p = window.adminProfile;
+                            if (topAvatar) {
+                                if (p.profileImage) {
+                                    let img = topAvatar.querySelector('img');
+                                    if (!img) { img = document.createElement('img'); img.style.width = '100%'; img.style.height = '100%'; img.style.borderRadius = '50%'; img.style.objectFit = 'cover'; topAvatar.textContent = ''; topAvatar.appendChild(img); }
+                                    img.src = p.profileImage;
+                                    img.alt = displayName || 'Avatar';
+                                } else if (displayName) {
+                                    topAvatar.textContent = displayName.trim().charAt(0).toUpperCase();
+                                }
+                            }
+                            if (dropdownAvatar) {
+                                if (p.profileImage) {
+                                    let img = dropdownAvatar.querySelector('img');
+                                    if (!img) { img = document.createElement('img'); dropdownAvatar.appendChild(img); }
+                                    img.src = p.profileImage; img.alt = displayName || 'Avatar';
+                                } else if (displayName) {
+                                    dropdownAvatar.textContent = (displayName||'A').trim().charAt(0).toUpperCase();
+                                }
+                            }
+                            if (emailEl) emailEl.textContent = p.email || emailEl.textContent;
+                            if (greetEl && displayName) greetEl.textContent = greetEl.textContent.replace(/,.*/,'') + `, ${displayName} 👋`;
+                        }
+                    } catch(e){ console.debug('populateAvatarIfReady error', e); }
+                })();
+                
+        // Top-right interactions: notifications & profile dropdown
+        (function topRightInteractions(){
+          const notifBtn = document.getElementById('notifBtn');
+          const notifPanel = document.getElementById('notifPanel');
+          const profileBtn = document.getElementById('profileBtn');
+          const profileDropdown = document.getElementById('profileDropdown');
+          const accountEdit = document.getElementById('accountEdit');
+          const accountSettings = document.getElementById('accountSettings');
+          const accountLogout = document.getElementById('accountLogout');
+
+          function closeAll() {
+            if (notifPanel) { notifPanel.setAttribute('data-open','false'); notifBtn && notifBtn.setAttribute('aria-expanded','false'); }
+            if (profileDropdown) { profileDropdown.setAttribute('aria-hidden','true'); profileBtn && profileBtn.setAttribute('aria-expanded','false'); }
+          }
+
+          notifBtn?.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const open = notifPanel?.getAttribute('data-open') === 'true';
+            closeAll();
+            if (!open && notifPanel) { notifPanel.setAttribute('data-open','true'); notifBtn.setAttribute('aria-expanded','true'); }
+          });
+
+          profileBtn?.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const open = profileDropdown?.getAttribute('aria-hidden') === 'false';
+            closeAll();
+            if (!open && profileDropdown) { profileDropdown.setAttribute('aria-hidden','false'); profileBtn.setAttribute('aria-expanded','true'); }
+          });
+
+          document.addEventListener('click', (ev) => {
+            if (!ev.target.closest('#notifPanel') && !ev.target.closest('#notifBtn') && !ev.target.closest('#profileDropdown') && !ev.target.closest('#profileBtn')) {
+              closeAll();
+            }
+          }, { capture: true });
+
+          document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeAll(); });
+
+          accountEdit?.addEventListener('click', () => { closeAll(); window.location.href = 'admin_profile.html'; });
+          accountSettings?.addEventListener('click', () => { closeAll(); window.location.href = 'settings.html'; });
+          accountLogout?.addEventListener('click', () => { closeAll(); try { localStorage.removeItem('authToken'); } catch(e){} window.location.href = 'login.html'; });
+        })();
+
+        // Quick synchronous attempt to populate avatar/greeting if profile already loaded
+        (function populateAvatarIfReady(){
+          try {
+            const topAvatar = document.querySelector('.main-top-bar .user-avatar') || document.getElementById('profileBtn');
+            const dropdownAvatar = document.querySelector('.avatar-large') || null;
+            const emailEl = document.getElementById('profileEmail');
+            const greetEl = document.getElementById('topGreetingName');
+            const displayName = (window.adminProfile && (window.adminProfile.displayName || window.adminProfile.name)) || window.adminDisplayName || '';
+            if (window.adminProfile) {
+              const p = window.adminProfile;
+              // Top bar avatar
+              if (topAvatar) {
+                if (p.profileImage) {
+                  // use inline IMG for better control
+                  let img = topAvatar.querySelector('img');
+                  if (!img) { img = document.createElement('img'); img.style.width = '100%'; img.style.height = '100%'; img.style.borderRadius = '50%'; img.style.objectFit = 'cover'; topAvatar.textContent = ''; topAvatar.appendChild(img); }
+                  img.src = p.profileImage;
+                  img.alt = displayName || 'Avatar';
+                } else if (displayName) {
+                  // initials fallback
+                  topAvatar.textContent = displayName.trim().charAt(0).toUpperCase();
+                }
+              }
+              // Dropdown avatar large
+              if (dropdownAvatar) {
+                if (p.profileImage) {
+                  let img = dropdownAvatar.querySelector('img');
+                  if (!img) { img = document.createElement('img'); dropdownAvatar.appendChild(img); }
+                  img.src = p.profileImage; img.alt = displayName || 'Avatar';
+                } else if (displayName) {
+                  dropdownAvatar.textContent = (displayName||'A').trim().charAt(0).toUpperCase();
+                }
+              }
+              if (emailEl) emailEl.textContent = p.email || emailEl.textContent;
+              if (greetEl && displayName) greetEl.textContent = greetEl.textContent.replace(/,.*/,'') + `, ${displayName}`;
+            }
+          } catch(e){ console.debug('populateAvatarIfReady error', e); }
+        })();
+    </script>
+        <script type="module">
+            import { auth, sendPasswordResetEmail, db, ref, set } from './admin_main.js';
+            import { reauthenticateWithCredential, EmailAuthProvider, updatePassword as fbUpdatePassword } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
+
+            const btn = document.getElementById('updatePasswordBtn');
+            const currentEl = document.getElementById('currentPassword');
+            const newEl = document.getElementById('newPassword');
+            const confirmEl = document.getElementById('confirmNewPassword');
+            const msgEl = document.getElementById('passwordMsg');
+
+            function setMsg(text, ok = true){ msgEl.textContent = text; msgEl.style.color = ok ? '#0f5132' : '#b91c1c'; }
+
+            // performPasswordUpdate: runs the actual reauth + update then signs the user out
+            async function performPasswordUpdate() {
+                const cur = currentEl.value.trim();
+                const nw = newEl.value.trim();
+                const cn = confirmEl.value.trim();
+                if (!cur || !nw || !cn) { setMsg('Please fill all password fields.', false); return false; }
+                if (nw.length < 8) { setMsg('New password must be at least 8 characters.', false); return false; }
+                if (nw !== cn) { setMsg('New passwords do not match.', false); return false; }
+                if (!auth || !auth.currentUser) { setMsg('No authenticated user found.', false); return false; }
+
+                setMsg('Updating password...');
+                try {
+                    btn.disabled = true;
+                    const cred = EmailAuthProvider.credential(auth.currentUser.email, cur);
+                    await reauthenticateWithCredential(auth.currentUser, cred);
+                    await fbUpdatePassword(auth.currentUser, nw);
+                    setMsg('Password updated successfully.', true);
+                    try {
+                        const key = Date.now();
+                        const auditPath = `admin_audit_logs/password_changes/${auth.currentUser.uid}/${key}`;
+                        const payload = {
+                            uid: auth.currentUser.uid,
+                            email: auth.currentUser.email || '',
+                            changedAt: new Date().toISOString(),
+                            method: 'updatePassword',
+                            userAgent: (navigator && navigator.userAgent) ? navigator.userAgent : '',
+                            page: location && location.pathname ? location.pathname : '',
+                        };
+                        await set(ref(db, auditPath), payload);
+                    } catch (auditErr) { console.warn('audit log write failed', auditErr); }
+                    try { const lastPath = `admins/${auth.currentUser.uid}/lastPasswordChange`; await set(ref(db, lastPath), new Date().toISOString()); } catch (e) { console.warn('failed updating lastPasswordChange', e); }
+                    try { /* Notifications suppressed on this page: password changed */ } catch(e) { }
+                    currentEl.value = ''; newEl.value = ''; confirmEl.value = '';
+                    try { showToast('Password changed — signing out to apply new credentials...'); } catch(_){ }
+                    try {
+                        console.log('Password change: executing sign-out redirect', { uid: (auth && auth.currentUser ? auth.currentUser.uid : 'unknown'), ts: new Date().toISOString() });
+                        if (typeof window.signOutAndRedirect === 'function') { await window.signOutAndRedirect(); }
+                        else if (window.signOutUser && typeof window.signOutUser === 'function') { await window.signOutUser(); window.location.href = 'login.html'; }
+                        else if (window.auth && typeof window.signOut === 'function') { await window.signOut(window.auth); window.location.href = 'login.html'; }
+                        else { window.location.href = 'login.html'; }
+                    } catch (signErr) { console.warn('Sign-out after password change failed', signErr); try { window.location.href = 'login.html'; } catch(_){ } }
+                    return true;
+                } catch (err) {
+                    console.error('password update error', err);
+                    if (auth && auth.currentUser) {
+                        const modal = document.getElementById('passwordResetModal');
+                        const modalMsg = document.getElementById('passwordResetModalMsg');
+                        const cancelBtn = document.getElementById('passwordResetCancel');
+                        const sendBtn = document.getElementById('passwordResetSend');
+                        if (modal && modalMsg && cancelBtn && sendBtn) {
+                            openPasswordResetModal(auth.currentUser.email, auth.currentUser.uid, { onCancelMsg: 'Failed to update password: ' + (err && err.message) });
+                        } else { setMsg('Failed to update password: ' + (err && err.message), false); }
+                    } else { setMsg('Failed to update password: ' + (err && err.message), false); }
+                    return false;
+                } finally { btn.disabled = false; }
+            }
+
+            // Confirmation modal creation and wiring
+            function openConfirmPasswordChange() {
+                let modal = document.getElementById('confirmPasswordChangeModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'confirmPasswordChangeModal';
+                    modal.style = 'display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3200';
+                    modal.innerHTML = `
+                        <div style="background:#fff;border-radius:8px;padding:18px;max-width:480px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+                            <h3 style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm Password Change</h3>
+                            <div id="confirmPasswordChangeMsg" style="font-size:15px;margin-bottom:12px;color:#111">Are you sure? After confirming you'll be signed out and must login again using your new password.</div>
+                            <div style="display:flex;gap:8px;justify-content:flex-end">
+                                <button id="confirmPasswordChangeCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                                <button id="confirmPasswordChangeOk" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Confirm and Sign Out</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                modal.style.display = 'flex';
+                const ok = modal.querySelector('#confirmPasswordChangeOk');
+                const cancel = modal.querySelector('#confirmPasswordChangeCancel');
+                function cleanup() { modal.style.display = 'none'; ok.removeEventListener('click', onOk); cancel.removeEventListener('click', onCancel); }
+                async function onOk() { ok.disabled = true; try { await performPasswordUpdate(); } finally { cleanup(); ok.disabled = false; } }
+                function onCancel() { cleanup(); }
+                cancel.addEventListener('click', onCancel);
+                ok.addEventListener('click', onOk);
+            }
+
+            // Wire Update Password button to validation + confirmation
+            btn && btn.addEventListener('click', (e) => {
+                e && e.preventDefault && e.preventDefault();
+                const cur = currentEl.value.trim();
+                const nw = newEl.value.trim();
+                const cn = confirmEl.value.trim();
+                if (!cur || !nw || !cn) { setMsg('Please fill all password fields.', false); return; }
+                if (nw.length < 8) { setMsg('New password must be at least 8 characters.', false); return; }
+                if (nw !== cn) { setMsg('New passwords do not match.', false); return; }
+                openConfirmPasswordChange();
+            });
+        </script>
+        <script type="module">
+            // helper: centralized password reset modal flow so both 'Forgot password?' and reauth-fallback use same code
+            import { auth, db, ref, set } from './admin_main.js';
+            import { sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js';
+
+            window.openPasswordResetModal = function(email, uid, opts = {}) {
+                const modal = document.getElementById('passwordResetModal');
+                const modalMsg = document.getElementById('passwordResetModalMsg');
+                const cancelBtn = document.getElementById('passwordResetCancel');
+                const sendBtn = document.getElementById('passwordResetSend');
+                if (!modal || !modalMsg || !cancelBtn || !sendBtn) return;
+                modalMsg.textContent = opts.message || ('Send password reset email to ' + (email || '(unknown)') + '?');
+                modal.style.display = 'flex';
+                function cleanup() { modal.style.display = 'none'; cancelBtn.removeEventListener('click', onCancel); sendBtn.removeEventListener('click', onSend); }
+                function onCancel() { cleanup(); if (opts.onCancelMsg) { const el = document.getElementById('passwordMsg'); if (el) el.textContent = opts.onCancelMsg; } }
+                async function onSend() {
+                    sendBtn.disabled = true;
+                    try {
+                        await sendPasswordResetEmail(auth, email);
+                        // audit log
+                        try {
+                            const key = Date.now();
+                            const auditPath = `admin_audit_logs/password_changes/${uid}/${key}`;
+                            const payload = { uid: uid, email: email || '', changedAt: new Date().toISOString(), method: 'passwordResetEmailSent', userAgent: navigator.userAgent || '', page: location.pathname };
+                            await set(ref(db, auditPath), payload);
+                        } catch (auditErr) { console.warn('audit log write failed', auditErr); }
+                        cleanup();
+                        if (typeof opts.onSuccess === 'function') opts.onSuccess();
+                        const toaste = document.getElementById('profileToast'); if (toaste) { showToast('Password reset email sent.'); }
+                        try { /* Notifications suppressed on this page: password reset sent */ } catch(e) { }
+                        // refresh recent activity
+                        try { window.dispatchEvent(new CustomEvent('adminProfileLoaded', { detail: window.adminProfile })); } catch(e){}
+                    } catch (e) {
+                        console.error('sendPasswordResetEmail error', e);
+                        cleanup();
+                        if (opts.onErrorMsg) { const el = document.getElementById('passwordMsg'); if (el) el.textContent = opts.onErrorMsg + ': ' + (e && e.message); }
+                    } finally { sendBtn.disabled = false; }
+                }
+                cancelBtn.addEventListener('click', onCancel);
+                sendBtn.addEventListener('click', onSend);
+            };
+
+            // wire the forgot link to open the modal
+            document.addEventListener('DOMContentLoaded', () => {
+                const forgot = document.getElementById('forgotPasswordLink');
+                if (!forgot) return;
+                forgot.addEventListener('click', (ev) => {
+                    ev.preventDefault();
+                    const email = (window.adminProfile && window.adminProfile.email) || (auth && auth.currentUser && auth.currentUser.email) || '';
+                    const uid = (window.adminProfile && window.adminProfile.uid) || (auth && auth.currentUser && auth.currentUser.uid) || '';
+                    openPasswordResetModal(email, uid, { message: 'Send password reset email to ' + (email || '(unknown)') + '?', onSuccess: () => {}, onErrorMsg: 'Unable to send reset email' });
+                });
+            });
+        </script>
+        <script type="module">
+            import { auth, db, ref, get, getStorage, storageRef, getDownloadURL, onAuthStateChanged } from './admin_main.js';
+
+            window.adminDisplayName = window.adminDisplayName || 'Admin';
+
+            async function loadAdminProfileInto(pageOptions = {}) {
+              // pageOptions: { greetingSelector, avatarSelector, timeSelector }
+              const greetingSelector = pageOptions.greetingSelector || '#topGreetingName';
+              const avatarSelector = pageOptions.avatarSelector || '.main-top-bar .user-avatar';
+              const timeSelector = pageOptions.timeSelector || '#topGreetingTime';
+
+                            try {
+                                onAuthStateChanged(auth, async (user) => {
+                                    if (!user) {
+                                        window.location.href = 'login.html';
+                                        return;
+                                    }
+                  try {
+                    const snap = await get(ref(db, `admins/${user.uid}`));
+                    if (snap && snap.exists()) {
+                      const data = snap.val() || {};
+                      // Prefer the schema you provided: fullname, username, position, role, profileImage, twoFactorEnabled
+                      const fullname = data.fullname || data.full_name || data.displayName || '';
+                      const username = data.username || data.user || '';
+                      const position = data.position || data.role || data.position || '';
+                      const role = data.role || '';
+                      const profileImage = data.profileImage || data.profile_image || data.photo_url || data.photoURL || data.photo || '';
+                      // twoFactorEnabled: keep blank if not set yet
+                      const twoFactorEnabled = (typeof data.twoFactorEnabled !== 'undefined' && data.twoFactorEnabled !== null) ? data.twoFactorEnabled : '';
+
+                      // Prefer username for the top greeting, then fullname, then other fallbacks
+                      const displayName = username || fullname || user.displayName || (user.email || '').split('@')[0] || 'Admin';
+                      window.adminDisplayName = displayName;
+
+                      // Expose a full profile object for pages that need other fields
+                      window.adminProfile = {
+                        uid: user.uid,
+                        fullname,
+                        username,
+                        email: data.email || user.email || '',
+                        position: position || data.position || '',
+                        role: role || '',
+                        status: data.status || data.enable || data.enabled || '',
+                        profileImage,
+                        phone: data.phone || '',
+                        createdAt: data.createdAt || data.created_at || data.created || '',
+                        lastLogin: data.lastLogin || data.last_login || '',
+                        twoFactorEnabled
+                      };
+
+                                            // Dispatch custom event to notify other scripts that profile is loaded
+                                            window.dispatchEvent(new CustomEvent('adminProfileLoaded', { detail: window.adminProfile }));
+                                            // write a login audit entry (client-side) so Recent Activity shows login
+                                            try {
+                                                const key = Date.now();
+                                                const auditPath = `admin_audit_logs/logins/${user.uid}/${key}`;
+                                                const payload = { uid: user.uid, email: user.email || '', timestamp: new Date().toISOString(), type: 'login', page: location.pathname };
+                                                await set(ref(db, auditPath), payload);
+                                            } catch (auditErr) {
+                                                console.warn('login audit write failed', auditErr);
+                                            }
+
+                      // Update greeting and time immediately
+                      const topGreetingName = document.querySelector(greetingSelector);
+                      const topGreetingTime = document.querySelector(timeSelector);
+                      const now = new Date();
+                      const h = now.getHours();
+                      let greet = 'Good Morning';
+                      if (h >= 12 && h < 18) greet = 'Good Afternoon';
+                      else if (h >= 18) greet = 'Good Evening';
+                      if (topGreetingName) topGreetingName.textContent = `${greet}, ${window.adminDisplayName} 👋`;
+                      if (topGreetingTime) topGreetingTime.textContent = now.toLocaleString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+                      // Avatar handling
+                      const avatarDiv = document.querySelector(avatarSelector);
+                      if (avatarDiv) {
+                        let photoUrl = data.photo_url || data.photoURL || data.photo || data.profileImage || null;
+                        if (photoUrl) {
+                          // Assume photoUrl is already a full URL, no Storage call needed
+                          let img = avatarDiv.querySelector('img');
+                          if (!img) {
+                            img = document.createElement('img');
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.borderRadius = '50%';
+                            img.style.objectFit = 'cover';
+                            avatarDiv.textContent = ''; // Clear text
+                            avatarDiv.appendChild(img);
+                          }
+                          img.src = photoUrl;
+                          img.style.display = 'block';
+                        } else {
+                          const img = avatarDiv.querySelector('img');
+                          if (img) {
+                            img.src = '';
+                            img.style.display = 'none';
+                          }
+                          avatarDiv.style.backgroundImage = '';
+                          avatarDiv.textContent = (window.adminDisplayName || 'A').trim().charAt(0).toUpperCase();
+                        }
+                      }
+                    }
+                  } catch (err) {
+                    console.error('Error loading admin profile:', err);
+                  }
+                });
+              } catch (err) {
+                console.error('Error in loadAdminProfileInto:', err);
+              }
+            }
+
+            function startGreetingClock(greetingSelector = '#topGreetingName', timeSelector = '#topGreetingTime') {
+              function updateTopGreeting(){
+                const now = new Date();
+                const h = now.getHours();
+                let greet = 'Good Morning'; if (h>=12&&h<18) greet='Good Afternoon'; else if (h>=18) greet='Good Evening';
+                const name = window.adminDisplayName || 'Admin';
+                const nameEl = document.querySelector(greetingSelector);
+                const timeEl = document.querySelector(timeSelector);
+                if (nameEl) nameEl.textContent = `${greet}, ${name} 👋`;
+                if (timeEl) timeEl.textContent = now.toLocaleString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+              }
+              updateTopGreeting();
+              setInterval(updateTopGreeting, 30000);
+              document.addEventListener('DOMContentLoaded', updateTopGreeting);
+            }
+
+            // Allow fallback to .profile-name if admin record isn't ready
+            const profileNameEl = document.querySelector('.profile-name');
+            if (profileNameEl && (!window.adminDisplayName || window.adminDisplayName === 'Admin')) {
+                window.adminDisplayName = profileNameEl.textContent.trim().split(' ')[0] || window.adminDisplayName;
+            }
+            loadAdminProfileInto({ greetingSelector: '#topGreetingName', avatarSelector: '.main-top-bar .user-avatar', timeSelector: '#topGreetingTime' });
+            startGreetingClock('#topGreetingName', '#topGreetingTime');
+        </script>
+</script>
+
+        <script src="profile_dropdown.js"></script>
+
+        <script>
+        (function(){
+            // Fallback toggle for notifications popover in case automatic wiring doesn't run
+            try{
+                const btn = document.getElementById('notifBtn');
+                const panel = document.getElementById('notifPanel');
+                if (!btn || !panel) return;
+                function openPanel(){
+                    panel.setAttribute('data-open','true');
+                    panel.style.display = 'block'; panel.style.visibility='visible'; panel.style.opacity='1';
+                    btn.setAttribute('aria-expanded','true');
+                    try{ const r = btn.getBoundingClientRect(); panel.style.right = (window.innerWidth - r.right) + 'px'; panel.style.top = (r.bottom + 8) + 'px'; }catch(e){}
+                }
+                function closePanel(){
+                    panel.setAttribute('data-open','false');
+                    panel.style.display = 'none'; panel.style.visibility='hidden'; panel.style.opacity='0';
+                    btn.setAttribute('aria-expanded','false');
+                }
+                btn.addEventListener('click', (e)=>{ e.preventDefault(); const open = panel.getAttribute('data-open') === 'true'; if (open) closePanel(); else openPanel(); });
+                document.addEventListener('click', (ev)=>{ if (!panel || panel.getAttribute('data-open') !== 'true') return; if (!ev.target.closest('#notifPanel') && !ev.target.closest('#notifBtn')) closePanel(); }, true);
+            }catch(e){ console.debug('notif fallback wiring', e); }
+        })();
+        </script>
+
+    <!-- Confirm modal for logout -->
+        <div id="confirmModalLogout" style="display:none;position:fixed;inset:0;background:rgba(2,6,23,0.45);align-items:center;justify-content:center;z-index:3000">
+            <div style="background:#fff;border-radius:12px;padding:18px;max-width:420px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.2)">
+                <h3 id="confirmModalLogoutTitle" style="margin:0 0 8px 0;font-size:16px;font-weight:700">Confirm</h3>
+                <div id="confirmModalLogoutMessage" style="font-size:15px;margin-bottom:12px;color:#111">Are you sure you want to sign out?</div>
+                <div style="display:flex;gap:8px;justify-content:flex-end">
+                    <button id="confirmModalLogoutCancel" style="background:#6c757d;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Cancel</button>
+                    <button id="confirmModalLogoutOk" style="background:#00723f;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer">Confirm</button>
+                </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+            function attachLogout(){
+                const sidebarLogout = document.getElementById('sidebarLogoutBtn');
+                if (!sidebarLogout) return;
+                if (sidebarLogout._logoutHandlerAttached) return;
+                sidebarLogout._logoutHandlerAttached = true;
+                const confirmModal = document.getElementById('confirmModalLogout');
+                const confirmOk = document.getElementById('confirmModalLogoutOk');
+                const confirmCancel = document.getElementById('confirmModalLogoutCancel');
+                function doLogout(){
+                    const profileLogout = document.getElementById('accountLogout');
+                    if (profileLogout) { profileLogout.click(); return; }
+                    if (typeof window.signOutAndRedirect === 'function') { window.signOutAndRedirect(); return; }
+                    try { localStorage.removeItem('authToken'); } catch(e){}
+                    window.location.href = 'login.html';
+                }
+                sidebarLogout.addEventListener('click', () => {
+                    if (!confirmModal || !confirmOk || !confirmCancel) { if (confirm('Are you sure you want to sign out?')) doLogout(); return; }
+                    confirmModal.style.display = 'flex';
+                    function cleanup(){ confirmModal.style.display = 'none'; confirmOk.removeEventListener('click', onOk); confirmCancel.removeEventListener('click', onCancel); document.removeEventListener('keydown', onKeyDown); }
+                    function onOk(){ cleanup(); doLogout(); }
+                    function onCancel(){ cleanup(); }
+                    function onKeyDown(e){ if (e.key === 'Escape') cleanup(); }
+                    confirmOk.addEventListener('click', onOk);
+                    confirmCancel.addEventListener('click', onCancel);
+                    document.addEventListener('keydown', onKeyDown);
+                });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachLogout); else attachLogout();
+        })();
+
+    (function(){
+        if (window.__sidebarLogoutHandlerAdded) return; window.__sidebarLogoutHandlerAdded = true;
+        function attachLogout(){
+            const sidebarLogout = document.getElementById('sidebarLogoutBtn');
+            if (!sidebarLogout) return;
+            sidebarLogout.addEventListener('click', () => {
+                const profileLogout = document.getElementById('accountLogout');
+                if (profileLogout) { profileLogout.click(); return; }
+                if (typeof window.signOutAndRedirect === 'function') { window.signOutAndRedirect(); return; }
+                try { localStorage.removeItem('authToken'); } catch(e){}
+                window.location.href = 'login.html';
+            });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachLogout); else attachLogout();
+    })();
+    </script>
+
+</body>
+</html>

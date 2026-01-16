@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In - SafeSpace Portal</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script> (function(){ try{ emailjs.init("En395SjR7Jg57-J8u"); }catch(e){ console.debug('EmailJS init failed', e); } })(); </script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    /* Make the page non-scrolling */
+    html, body {
+      height: 100%;
+      overflow: hidden; /* prevent page scrolling */
+    }
+    body {
+      background: #f4f6f9;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header (fixed) */
+    .header {
+      background: linear-gradient(135deg, #004c27, #00723f);
+      color: white;
+      padding: 1.25rem 1rem; /* slightly reduced to save viewport space */
+      text-align: center;
+      /* fix header to top of viewport */
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #00723f;
+      font-weight: bold;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      font-size: 1rem;
+      opacity: 0.9;
+      font-weight: 300;
+    }
+
+    /* Main Container (fills viewport between fixed header/footer) */
+    .main-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* stretch to full viewport so background remains visible */
+      height: 100vh;
+      padding: 2rem 1rem;
+      overflow: visible;
+    }
+
+    /* Fixed centered login card - page itself won't scroll */
+    .container {
+      max-width: 420px;
+      width: 100%;
+      background: white;
+      padding: 1.75rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      /* center the card and keep it fixed so the page stays steady */
+  position: fixed;
+  top: 56%; /* moved lower in the viewport */
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 60;
+      max-height: calc(100vh - 140px); /* leave room for header/footer */
+      overflow: auto; /* allow internal scrolling if card content exceeds space */
+    }
+
+    .signin-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #00723f;
+      text-align: center;
+    }
+
+    .signin-subtitle {
+      font-size: 0.9rem;
+      color: #666;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      padding-left: 3rem;
+      padding-right: 3rem;
+      border: 2px solid #e1e5e9;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      background: #f9f9f9;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #00723f;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(0, 114, 63, 0.1);
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #666;
+      font-size: 1rem;
+    }
+
+    /* Toggle eye button on the right of password inputs */
+    .toggle-password {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: #666;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toggle-password:focus {
+      outline: none;
+      color: #00723f;
+    }
+
+    .forgot {
+      text-align: right;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .forgot a {
+      color: #00723f;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .forgot a:hover {
+      color: #004c27;
+      text-decoration: underline;
+    }
+
+    .signin-btn {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00723f, #004c27);
+      color: white;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .signin-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(0, 114, 63, 0.3);
+    }
+
+    .signin-btn:active {
+      transform: translateY(0);
+    }
+
+    .signin-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .signin-btn:hover::before {
+      left: 100%;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 1.5rem 0;
+      position: relative;
+      color: #999;
+      font-size: 0.9rem;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e1e5e9;
+    }
+
+    .divider span {
+      background: white;
+      padding: 0 1rem;
+      position: relative;
+    }
+
+    .signup-link {
+      text-align: center;
+      font-size: 0.95rem;
+      color: #666;
+    }
+
+    .signup-link a {
+      color: #00723f;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .signup-link a:hover {
+      color: #004c27;
+      text-decoration: underline;
+    }
+
+    /* Footer (fixed to bottom) */
+    .footer {
+      background: #f8f9fa;
+      padding: 0.75rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #666;
+      border-top: 1px solid #e1e5e9;
+      /* fix footer to bottom of viewport */
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      z-index: 40;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .header {
+        padding: 1.5rem 1rem;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .logo {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      .main-container {
+        padding: 1rem;
+      }
+
+      .container {
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      }
+
+      .signin-title {
+        font-size: 1.3rem;
+      }
+
+      input {
+        padding: 0.75rem 1rem;
+        padding-left: 2.75rem;
+        font-size: 0.95rem;
+      }
+
+      .input-icon {
+        left: 0.875rem;
+        font-size: 0.9rem;
+      }
+
+      .signin-btn {
+        padding: 0.875rem;
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.6rem;
+      }
+
+      .container {
+        margin: 0;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+      }
+
+      .main-container {
+        padding: 0.5rem;
+      }
+    }
+
+    /* Loading state */
+    .signin-btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .signin-btn.loading::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      margin: auto;
+      border: 2px solid transparent;
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo">SS</div>
+        <h1>SafeSpace</h1>
+      </div>
+      <p>Your mental wellness companion</p>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="container">
+      <h2 class="signin-title">Welcome Back</h2>
+      <p class="signin-subtitle">Sign in to continue to your admin portal</p>
+      <!-- Inline sign-in message (errors / status) -->
+      <div id="signinMsg" role="alert" aria-live="assertive" style="display:none;opacity:0;transition:opacity .9s ease;margin-bottom:12px;padding:10px;border-radius:8px;font-weight:600;"></div>
+
+      <form id="signinForm">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrapper">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="email" placeholder="Enter your email address" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock input-icon"></i>
+            <input type="password" id="password" placeholder="Enter your password" required />
+            <button type="button" class="toggle-password" id="togglePassword" aria-label="Show password">
+              <i class="fas fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="forgot">
+            <a href="#" onclick="showForgotPassword()">Forgot Password?</a>
+          </div>
+        </div>
+
+        <button type="submit" class="signin-btn" id="signinBtn">
+          Sign In to Portal
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2025 SafeSpace. Your privacy and mental wellness are our priority.</p>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div id="forgotPasswordModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:#fff;padding:18px;border-radius:10px;max-width:420px;width:92%;box-shadow:0 10px 40px rgba(2,6,23,0.24);">
+      <h3 style="margin:0 0 8px 0;font-size:18px;color:#0f172a">Reset your password</h3>
+      <p style="margin:0 0 12px 0;color:#374151;font-size:14px">Enter the email address for your account and we'll send a link to reset your password.</p>
+      <div style="margin-bottom:8px">
+        <input id="forgot_email" type="email" placeholder="your@email.com" style="width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px">
+      </div>
+      <div id="forgotMsg" style="font-size:13px;color:#666;margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="forgotCancelBtn" style="padding:8px 12px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;">Cancel</button>
+        <button id="forgotSendBtn" style="padding:8px 12px;border-radius:8px;border:0;background:#10b981;color:#fff;font-weight:700;">Send Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Prevent notification UI from being injected on the public login page
+    try { window.SKIP_NOTIF_UI = true; } catch(e) {}
+  </script>
+  <script type="module">
+  import { adminLogin, redirectIfAuthenticated, sendPasswordResetEmail, auth } from './admin_main.js';
+
+    // Redirect signed-in admins away from the login page
+    redirectIfAuthenticated();
+
+    const signinForm = document.getElementById('signinForm');
+    const submitBtn = document.getElementById('signinBtn');
+
+    function setLoading(on) {
+      if (on) {
+        submitBtn.classList.add('loading');
+        submitBtn.innerHTML = '';
+      } else {
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'Sign In to Portal';
+      }
+    }
+
+    function showSignInMessage(text, isError = true) {
+      try {
+        const el = document.getElementById('signinMsg');
+        if (!el) { if (isError) alert(text); else alert(text); return; }
+        // clear any existing timers
+        try { if (window._signinMsgTimer) { clearTimeout(window._signinMsgTimer); window._signinMsgTimer = null; } } catch(e){}
+        try { if (window._signinMsgHideTimer) { clearTimeout(window._signinMsgHideTimer); window._signinMsgHideTimer = null; } } catch(e){}
+        
+        // Show and ensure fully opaque
+        el.style.display = 'block';
+        // give browsers a tick to apply display before changing opacity
+        el.textContent = text;
+        el.style.background = isError ? '#fee2e2' : '#ecfdf5';
+        el.style.color = isError ? '#991b1b' : '#065f46';
+        el.style.border = isError ? '1px solid #fecaca' : '1px solid #bbf7d0';
+        // force reflow to ensure transition runs
+        void el.offsetWidth;
+        el.style.opacity = '1';
+
+        // Auto-hide after 4.2 seconds using fade-out transition
+        window._signinMsgTimer = setTimeout(() => {
+          try {
+            // start fade
+            el.style.opacity = '0';
+            // after transition completes, remove from flow
+            window._signinMsgHideTimer = setTimeout(() => {
+              try { el.style.display = 'none'; el.textContent = ''; } catch(e){}
+              window._signinMsgTimer = null; window._signinMsgHideTimer = null;
+            }, 980); // slightly longer than CSS transition (0.9s)
+          } catch(e) { /* ignore */ }
+        }, 4200);
+      } catch(e){ console.debug('showSignInMessage error', e); }
+    }
+
+    signinForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      // Basic presence check
+      if (!email || !password) {
+        showSignInMessage('Please fill in all fields.', true);
+        return;
+      }
+
+      // Validate email format (reject 'user@' etc.)
+      const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+      if (!emailRegex.test(email)) {
+        // Show a generic sign-in failed message and do not attempt network auth
+        showSignInMessage('Sign-in failed: invalid email address.', true);
+        return;
+      }
+
+      setLoading(true);
+      // Clear previous messages
+      try { const m = document.getElementById('signinMsg'); if (m) { m.style.display = 'none'; m.textContent = ''; } } catch(e){}
+      try {
+        await adminLogin(email, password);
+      } catch (err) {
+        // Map common Firebase auth errors to friendlier messages
+        let msg = 'Sign-in failed: invalid password or email address.';
+        try {
+          const code = err && (err.code || '');
+          if (code) {
+            switch (code) {
+              case 'auth/invalid-credential':
+              case 'auth/wrong-password':
+              case 'auth/user-not-found':
+                msg = 'Sign-in failed: invalid password or email address.';
+                break;
+              case 'auth/invalid-email':
+                msg = 'Sign-in failed: invalid email address.';
+                break;
+              case 'auth/too-many-requests':
+                msg = 'Sign-in failed: too many attempts. Try again later.';
+                break;
+              default:
+                // fall back to error.message if it's informative and not the default Firebase wrapper
+                if (err && err.message && !String(err.message).toLowerCase().includes('firebase: error')) {
+                  msg = err.message;
+                }
+            }
+          } else if (err && err.message) {
+            // If there is a message but no code, avoid exposing raw Firebase wrapper messages
+            if (!String(err.message).toLowerCase().includes('firebase: error')) msg = err.message;
+          }
+        } catch (mapErr) { console.debug('error mapping failed', mapErr); }
+        showSignInMessage(msg, true);
+        setLoading(false);
+      }
+    });
+
+    // --- Forgot password modal handlers ---
+    function showForgotPassword() {
+      const modal = document.getElementById('forgotPasswordModal');
+      const emailInput = document.getElementById('forgot_email');
+      try { if (emailInput && document.getElementById('email')) emailInput.value = document.getElementById('email').value.trim(); } catch(e){}
+      if (modal) modal.style.display = 'flex';
+      try { if (emailInput) emailInput.focus(); } catch(e){}
+    }
+    // Make callable from inline `onclick="showForgotPassword()"` (module scope is not global)
+    try { window.showForgotPassword = showForgotPassword; } catch(e) { /* ignore */ }
+
+    async function sendForgotPassword() {
+      const emailEl = document.getElementById('forgot_email');
+      const btn = document.getElementById('forgotSendBtn');
+      const msg = document.getElementById('forgotMsg');
+      if (!emailEl) return;
+      const email = (emailEl.value || '').trim();
+      if (!email) { msg.textContent = 'Please enter your email address.'; msg.style.color = '#b91c1c'; return; }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { msg.textContent = 'Please enter a valid email address.'; msg.style.color = '#b91c1c'; return; }
+      try {
+        if (!auth) { msg.textContent = 'Firebase not initialized. Refresh the page.'; msg.style.color = '#b91c1c'; console.error('sendForgotPassword: missing auth object'); return; }
+        btn.disabled = true; msg.textContent = 'Sending reset link...'; msg.style.color = '#374151';
+        console.debug('sendForgotPassword: calling sendPasswordResetEmail for', email);
+        await sendPasswordResetEmail(auth, email);
+        msg.textContent = 'A password reset email has been sent if the account exists.'; msg.style.color = '#065f46';
+        setTimeout(()=>{ document.getElementById('forgotPasswordModal').style.display='none'; msg.textContent=''; }, 1600);
+      } catch (err) {
+        console.error('sendForgotPassword error', err);
+        // Provide clearer feedback and tips for common failures
+        let userMsg = (err && err.message) ? err.message : 'Unable to send reset email';
+        if (err && err.code) {
+          userMsg += ' (' + err.code + ')';
+          if (err.code === 'auth/invalid-email') userMsg = 'The email address is invalid.';
+          if (err.code === 'auth/user-not-found') userMsg = 'If an account with that email exists, a reset email has been sent.';
+          if (err.code === 'auth/network-request-failed') userMsg = 'Network error. Check your connection and try again.';
+        }
+        msg.textContent = userMsg; msg.style.color = '#b91c1c';
+        msg.title = 'Error details: ' + (err && err.code ? err.code + ' — ' + (err.message||'') : (err && err.message ? err.message : ''));
+        // Helpful suggestions for debugging
+        console.info('Troubleshooting tips: serve files over http(s), check Firebase config and authDomain, and inspect network requests to identitytoolkit.googleapis.com');
+      } finally { try { btn.disabled = false; } catch(e){} }
+    }
+
+    // Add smooth focus animations
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'scale(1.02)';
+      });
+      input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'scale(1)';
+      });
+    });
+
+    // Password visibility toggle
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    if (togglePasswordBtn && passwordInput) {
+      togglePasswordBtn.addEventListener('click', function() {
+        const isText = passwordInput.type === 'text';
+        passwordInput.type = isText ? 'password' : 'text';
+        const icon = this.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-eye');
+          icon.classList.toggle('fa-eye-slash');
+        }
+        this.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
+      });
+    }
+
+    // Wire forgot password modal buttons
+    document.getElementById('forgotCancelBtn')?.addEventListener('click', function(){ document.getElementById('forgotPasswordModal').style.display='none'; document.getElementById('forgotMsg').textContent=''; });
+    document.getElementById('forgotSendBtn')?.addEventListener('click', sendForgotPassword);
+  </script>
+</body>
+</html>
